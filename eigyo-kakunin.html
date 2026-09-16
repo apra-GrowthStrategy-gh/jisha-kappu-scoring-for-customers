@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自社割賦 審査結果の確認（担当者用）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF0F4; --paper:#FFF; --ink:#16213A; --ink-2:#3C4659; --sub:#6B7484;
+  --rule:#D7DCE4; --focus:#2B4C8C; --ng:#C23A1E; --ng-bg:#FBEDEA;
+  --ok:#1D7050; --ok-bg:#E7F3EC; --warn:#9A6212; --warn-bg:#FBF2E1; --r:8px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"BIZ UDPGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;
+  font-size:16px;line-height:1.6;font-variant-numeric:tabular-nums}
+.wrap{max-width:480px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:19px;margin:0 0 2px}
+.lead{font-size:13px;color:var(--sub);margin:0 0 16px}
+button,input{font:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
+.f{padding:6px 0}
+.f label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:4px}
+.ib{display:flex;align-items:center;border:1px solid var(--rule);border-radius:6px;background:#FAFBFC;padding:0 12px}
+.ib:focus-within{border-color:var(--focus);background:#fff}
+.ib input{flex:1;min-width:0;width:100%;border:none;background:transparent;padding:11px 0;font-size:18px;letter-spacing:.04em}
+.ib input:focus-visible{outline:none}
+.go{width:100%;margin-top:10px;padding:14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.go:disabled{background:#AAB2C0;cursor:not-allowed}
+.msg{font-size:13px;color:var(--ng);margin:10px 0 0;min-height:1.6em}
+
+.res{display:none;text-align:center;padding:26px 18px;border-radius:var(--r);border:2px solid var(--rule);background:var(--paper);margin-bottom:14px}
+.res.on{display:block}
+.res[data-s="ok"]{border-color:var(--ok);background:var(--ok-bg)}
+.res[data-s="ng"]{border-color:var(--ng);background:var(--ng-bg)}
+.res[data-s="hold"]{border-color:var(--warn);background:var(--warn-bg)}
+.res .mk{font-size:46px;font-weight:700;line-height:1}
+.res[data-s="ok"] .mk{color:var(--ok)} .res[data-s="ng"] .mk{color:var(--ng)} .res[data-s="hold"] .mk{color:var(--warn)}
+.res .v{font-size:23px;font-weight:700;margin:6px 0 0}
+.res .who{font-size:13px;color:var(--ink-2);margin:8px 0 0}
+.res .rm{font-size:14px;line-height:1.6;margin:14px 0 0;padding:10px 12px;background:rgba(255,255,255,.8);border-radius:6px;text-align:left}
+.res .rm b{display:block;font-size:12px;color:var(--sub);margin-bottom:2px}
+.steps{padding:14px 18px}
+.steps h2{font-size:13px;margin:0 0 8px;color:var(--ink-2)}
+.steps ol{margin:0;padding-left:1.3em;font-size:13px;color:var(--ink-2)}
+.steps li{margin:0 0 5px}
+.foot{font-size:12px;color:var(--sub);margin:14px 2px 0;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>審査結果の確認</h1>
+  <p class="lead">担当者用です。お客さまの前では開かないでください。</p>
+
+  <div class="res" id="res" data-s="ok" aria-live="polite">
+    <div class="mk" id="mk">―</div>
+    <p class="v" id="v">―</p>
+    <p class="who" id="who"></p>
+    <div class="rm" id="rm" hidden><b>RMからの連絡</b><span id="rmText"></span></div>
+  </div>
+
+  <section class="card">
+    <div class="f">
+      <label for="id">受付番号</label>
+      <div class="ib"><input id="id" inputmode="numeric" placeholder="260917-001" autocomplete="off"></div>
+    </div>
+    <div class="f">
+      <label for="pass">パスコード</label>
+      <div class="ib"><input id="pass" type="password" autocomplete="current-password"></div>
+    </div>
+    <button type="button" class="go" id="go">結果を表示</button>
+    <p class="msg" id="msg"></p>
+  </section>
+
+  <section class="card steps" id="steps" hidden>
+    <h2>このあとの流れ</h2>
+    <ol id="stepList"></ol>
+  </section>
+
+  <p class="foot">結果の理由や基準はこの画面には表示されません。条件を変えれば通せるかどうかは、RMが確認して連絡します。</p>
+</div>
+
+<script>
+(() => {
+  // Apps Script のウェブアプリURLに差し替えてください
+  const ENDPOINT = 'https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec';
+  const READY = !/XXXX/.test(ENDPOINT);
+
+  const $ = id => document.getElementById(id);
+  const KEY = 'apra-kappu-pass';
+
+  try { const p = sessionStorage.getItem(KEY); if (p) $('pass').value = p; } catch (e) {}
+
+  $('id').addEventListener('input', () => {
+    const v = $('id').value.replace(/[^\d-]/g, '');
+    $('id').value = v.length === 6 && !v.includes('-') ? v + '-' : v;
+  });
+  [$('id'), $('pass')].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') $('go').click(); }));
+
+  $('go').addEventListener('click', async () => {
+    const id = $('id').value.trim(), pass = $('pass').value;
+    if (!id || !pass) { $('msg').textContent = '受付番号とパスコードを入れてください'; return; }
+    $('go').disabled = true; $('go').textContent = '照会しています…'; $('msg').textContent = '';
+    $('res').classList.remove('on'); $('steps').hidden = true;
+    try {
+      if (!READY) throw new Error('送信先が未設定です。Apps ScriptのURLを設定してください');
+      const url = ENDPOINT + '?mode=lookup&id=' + encodeURIComponent(id) + '&pass=' + encodeURIComponent(pass);
+      const json = await (await fetch(url)).json();
+      if (!json.ok) throw new Error(json.error === 'not found' ? '受付番号が見つかりません' : json.error === 'bad pass' ? 'パスコードが違います' : '照会できませんでした');
+      try { sessionStorage.setItem(KEY, pass); } catch (e) {}
+
+      const ok = json.result === '可決', hold = json.result === '要確認';
+      const box = $('res');
+      box.dataset.s = ok ? 'ok' : hold ? 'hold' : 'ng';
+      $('mk').textContent = ok ? '可' : hold ? '？' : '否';
+      $('v').textContent = ok ? '可決' : hold ? '要確認' : '否決';
+      $('who').textContent = `${json.name}さま（受付番号 ${json.id}）`;
+      $('rm').hidden = !json.rm_note;
+      $('rmText').textContent = json.rm_note || '';
+      box.classList.add('on');
+
+      const steps = ok
+        ? (json.need_rm
+            ? ['RMへ「可決」と受付番号を共有し、締結の可否を確認してください。', 'RMの確認後、お客さまにご案内してください。', '身分証・携帯名義・就業状況を確認してください。']
+            : ['お客さまに「お手続きを進められます」とご案内してください。', '身分証・携帯名義・就業状況を確認してください。', '直近1か月の給与明細と緊急連絡先をお預かりしてください。'])
+        : hold
+          ? ['入力内容に不足があります。RMへ受付番号を共有して確認してください。']
+          : ['お客さまには「このプランでのお手続きは難しい」とお伝えください。', 'RMへ受付番号を共有してください。金額や頭金を変えれば通せる場合があり、条件はRMから連絡します。', '理由はお客さまにお伝えしないでください。'];
+      $('stepList').innerHTML = steps.map(s => `<li>${s}</li>`).join('');
+      $('steps').hidden = false;
+      window.scrollTo(0, 0);
+    } catch (e) {
+      $('msg').textContent = e.message || '照会できませんでした';
+    } finally {
+      $('go').disabled = false; $('go').textContent = '結果を表示';
+    }
+  });
+})();
+</script>
+</body>
+</html>

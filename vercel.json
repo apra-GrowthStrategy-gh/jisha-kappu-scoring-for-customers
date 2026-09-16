@@ -1,0 +1,9 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/apply", "destination": "/kokyaku-intake.html" },
+    { "source": "/check", "destination": "/eigyo-kakunin.html" },
+    { "source": "/rm", "destination": "/jisha-loan-scoring.html" },
+    { "source": "/model", "destination": "/min-income-model.html" }
+  ]
+}
