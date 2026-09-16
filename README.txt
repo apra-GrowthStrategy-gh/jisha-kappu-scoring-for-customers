@@ -3,6 +3,7 @@ kokyaku-intake.html と eigyo-kakunin.html の中の
   const ENDPOINT = 'https://script.google.com/macros/s/XXXX.../exec';
 を、Apps Script のウェブアプリURLに書き換えて保存してください。
 
+
 【GitHubへのアップロード】
 このフォルダの中の6つのファイルを、すべてリポジトリのトップに置いてください。
 フォルダは作りません。ファイル名が全部違うので、ぶつかりません。
