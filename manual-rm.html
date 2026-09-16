@@ -250,6 +250,22 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
         <tr><td>算定スコア／返済比率</td><td>判定の中身</td></tr>
       </tbody>
     </table>
+    <h3>使用者リストの管理</h3>
+    <p><a href="https://docs.google.com/spreadsheets/d/1VWjgg1VV0LAm7rH1uCc8iPBXwI5aXEgXshrIfk8fdP4/edit" target="_blank" rel="noopener">受付台帳</a>の「使用者リスト」シートに名前を書いた人だけが、お客さま入力画面の担当者プルダウンに出ます。</p>
+    <table>
+      <thead><tr><th>列</th><th>入れるもの</th></tr></thead>
+      <tbody>
+        <tr><td>氏名</td><td>台帳に記録される名前。<b>ここに書いた人だけが選べます</b></td></tr>
+        <tr><td>ヨミ</td><td>カナ（検索に使います。空でも可）</td></tr>
+        <tr><td>所属</td><td>候補に小さく表示されます（空でも可）</td></tr>
+        <tr><td>有効</td><td>チェックボックス。<b>チェックが入っている行だけ</b>が候補に出ます。空欄のままだと使えません。退職・異動のときはチェックを外せば、行を消さずに済みます</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <b>反映のタイミング</b>
+      追加や変更は、お客さま入力画面を開き直せばすぐ反映されます。デプロイは不要です。
+    </div>
+
     <h3>FSへの返し方</h3>
     <p><code>RMコメント</code> の列に書いた内容が、FSの確認画面に「RMからの連絡」として表示されます。</p>
     <div class="ex">
