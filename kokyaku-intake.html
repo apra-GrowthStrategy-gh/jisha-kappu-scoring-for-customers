@@ -42,6 +42,17 @@ button,select,input{font:inherit}
 .ib.bad,.sel.bad{border-color:var(--ng);background:var(--ng-bg)}
 .sel{width:100%;padding:11px;border:1px solid var(--rule);border-radius:6px;background:#FAFBFC;color:var(--ink)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.combo{position:relative}
+.combo .ib{padding-right:4px}
+.caret{border:none;background:none;color:var(--sub);font-size:14px;padding:6px 8px;cursor:pointer}
+.clist{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;margin:0;padding:4px;list-style:none;
+  background:#fff;border:1px solid var(--rule);border-radius:6px;box-shadow:0 8px 24px rgba(22,33,58,.12);
+  max-height:260px;overflow:auto}
+.clist li{padding:10px 12px;border-radius:4px;cursor:pointer;font-size:15px;line-height:1.4}
+.clist li small{display:block;font-size:12px;color:var(--sub)}
+.clist li[aria-selected="true"],.clist li:hover{background:#EEF2F9}
+.clist li.none{color:var(--sub);cursor:default;font-size:13px}
+.clist li.none:hover{background:none}
 .ziprow{display:flex;gap:8px;align-items:center}
 .zipbtn{flex:none;padding:10px 14px;border:1px solid var(--rule);border-radius:6px;background:#FAFBFC;color:var(--ink-2);font-size:13px;cursor:pointer}
 .zipbtn:hover{border-color:var(--ink-2);color:var(--ink)}
@@ -142,7 +153,13 @@ button,select,input{font:inherit}
     </div>
     <div class="f">
       <label for="staffName">担当者名<span class="req">必須</span></label>
-      <div class="ib"><input id="staffName" autocomplete="off" placeholder="例）長谷部"></div>
+      <div class="combo" id="combo">
+        <div class="ib"><input id="staffName" autocomplete="off" placeholder="名前を入力または選択"
+          role="combobox" aria-expanded="false" aria-controls="staffList" aria-autocomplete="list">
+          <button type="button" class="caret" id="caret" aria-label="一覧を開く">▾</button></div>
+        <ul class="clist" id="staffList" role="listbox" hidden></ul>
+      </div>
+      <p class="hint" id="staffHint">読み込み中です…</p>
     </div>
   </section>
 
@@ -295,7 +312,7 @@ button,select,input{font:inherit}
 (() => {
   // ============ 設定 ============
   // Apps Script をデプロイしたときに表示される「ウェブアプリのURL」に差し替えてください
-  const ENDPOINT = 'https://script.google.com/a/macros/apra.co.jp/s/AKfycbzqu8qntVaMIXl_VB6SOxH_9FVoQ2WXcimk5yS2HPsqKayoz1TzNcMx563eH_gzQEPCeg/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec';
   const TOKEN = 'apra-kappu-2026';   // Apps Script 側の TOKEN と同じ文字列にしてください
   const READY = !/XXXX/.test(ENDPOINT);   // ENDPOINT を差し替えるまでは動作確認モードで動きます
 
@@ -327,6 +344,7 @@ button,select,input{font:inherit}
   }
 
   const state = { sex: '', hh: 0, hc: '', debts: [] };
+  let STAFF = null;   // 使用者リスト（読み込めるまで null）
   let seq = 0;
 
   // 支払回数
@@ -355,6 +373,99 @@ button,select,input{font:inherit}
   ['staffName', 'lastName', 'firstName', 'lastKana', 'firstKana', 'tel', 'zip', 'pref', 'city', 'addr1', 'addr2', 'birth'].forEach(id => $(id).addEventListener('input', check));
   $('agree').addEventListener('change', check);
   sel.addEventListener('change', check);
+
+  // ============ 担当者プルダウン（使用者リスト） ============
+  function jsonp(url) {
+    return new Promise((resolve, reject) => {
+      const cb = 'cb' + Date.now() + Math.floor(Math.random() * 1000);
+      const sc = document.createElement('script');
+      const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 12000);
+      function cleanup() { clearTimeout(timer); delete window[cb]; sc.remove(); }
+      window[cb] = j => { cleanup(); resolve(j); };
+      sc.onerror = () => { cleanup(); reject(new Error('error')); };
+      sc.src = url + '&callback=' + cb;
+      document.body.appendChild(sc);
+    });
+  }
+
+  async function loadStaff() {
+    if (!READY) { STAFF = null; $('staffHint').textContent = '動作確認モードのため、名前は自由に入力できます'; return; }
+    try {
+      const j = await jsonp(ENDPOINT + '?mode=staff&token=' + encodeURIComponent(TOKEN));
+      if (!j.ok) throw new Error(j.error);
+      STAFF = j.staff || [];
+      $('staffHint').textContent = `使用者リストの${STAFF.length}名から選べます`;
+    } catch (e) {
+      STAFF = null;
+      $('staffHint').textContent = '一覧を読み込めませんでした。名前を直接入力してください';
+    }
+    check();
+  }
+
+  const combo = { open: false, idx: -1, items: [] };
+  const staffInput = $('staffName'), staffList = $('staffList');
+
+  // ひらがな・カタカナ・全角英数のどれで打っても当たるようにそろえる
+  function norm(t) {
+    return String(t).toLowerCase()
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+      .replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60))
+      .replace(/[\s　]/g, '');
+  }
+  function matches(q) {
+    if (!STAFF) return [];
+    const t = norm(q);
+    if (!t) return STAFF;
+    return STAFF.filter(s => norm(s.name + s.kana + s.dept).includes(t));
+  }
+  function renderList(items) {
+    combo.items = items;
+    staffList.innerHTML = items.length
+      ? items.map((s, i) => `<li role="option" data-i="${i}" aria-selected="${i === combo.idx}">${s.name}${s.dept ? `<small>${s.dept}</small>` : ''}</li>`).join('')
+      : '<li class="none">該当する担当者がいません</li>';
+  }
+  function openList(items) {
+    if (!STAFF) return;
+    renderList(items);
+    staffList.hidden = false; combo.open = true;
+    staffInput.setAttribute('aria-expanded', 'true');
+  }
+  function closeList() {
+    staffList.hidden = true; combo.open = false; combo.idx = -1;
+    staffInput.setAttribute('aria-expanded', 'false');
+  }
+  function pick(i) {
+    const s = combo.items[i];
+    if (!s) return;
+    staffInput.value = s.name; closeList(); check();
+  }
+
+  staffInput.addEventListener('input', () => { combo.idx = -1; openList(matches(staffInput.value)); check(); });
+  staffInput.addEventListener('focus', () => openList(matches(staffInput.value)));
+  $('caret').addEventListener('click', () => {
+    if (combo.open) { closeList(); } else { staffInput.focus(); openList(matches('')); }
+  });
+  staffInput.addEventListener('keydown', e => {
+    if (!combo.open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { openList(matches(staffInput.value)); return; }
+    if (!combo.open) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const n = combo.items.length; if (!n) return;
+      combo.idx = e.key === 'ArrowDown' ? (combo.idx + 1) % n : (combo.idx - 1 + n) % n;
+      renderList(combo.items);
+      staffList.children[combo.idx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      if (combo.idx >= 0) { e.preventDefault(); pick(combo.idx); }
+      else if (combo.items.length === 1) { e.preventDefault(); pick(0); }
+    } else if (e.key === 'Escape') { closeList(); }
+  });
+  staffList.addEventListener('mousedown', e => {
+    const li = e.target.closest('li[data-i]');
+    if (li) { e.preventDefault(); pick(Number(li.dataset.i)); }
+  });
+  document.addEventListener('click', e => { if (!$('combo').contains(e.target)) closeList(); });
+
+  loadStaff();
 
   // 年齢
   function age() {
@@ -459,7 +570,10 @@ button,select,input{font:inherit}
 
     const missing = [];
     if (!parse(v('price'))) missing.push('商品金額');
-    if (!v('staffName')) missing.push('担当者名');
+    const staffName = v('staffName');
+    const staffOk = STAFF ? STAFF.some(s => s.name === staffName) : staffName.length > 0;
+    if (!staffOk) missing.push(staffName && STAFF ? '担当者名（一覧から選んでください）' : '担当者名');
+    $('staffName').parentElement.classList.toggle('bad', !!staffName && !staffOk);
     ['lastName', 'firstName', 'lastKana', 'firstKana'].forEach(id => { if (!v(id)) missing.push('お名前'); });
     if (!v('birth') || a === null) missing.push('生年月日');
     if (!state.sex) missing.push('性別');
@@ -527,7 +641,10 @@ button,select,input{font:inherit}
     } catch (e) {
       btn.disabled = false; btn.textContent = '入力内容を送信する';
       const msg = $('barmsg');
-      msg.textContent = '送信できませんでした。通信環境をご確認のうえ、もう一度お試しください'; msg.classList.add('bad');
+      msg.textContent = String(e.message) === 'bad staff'
+        ? '担当者名が使用者リストにありません。一覧から選び直してください'
+        : '送信できませんでした。通信環境をご確認のうえ、もう一度お試しください';
+      msg.classList.add('bad');
     }
   });
 
@@ -535,6 +652,22 @@ button,select,input{font:inherit}
 
   // ============ 営業担当だけが結果を見る ============
   let lastId = '';
+
+  // Googleの転送に影響されないよう、JSONPで取りにいく
+  function lookupJsonp(id, pass) {
+    return new Promise((resolve, reject) => {
+      const cb = 'lkcb' + Date.now();
+      const sc = document.createElement('script');
+      const timer = setTimeout(() => { cleanup(); reject(new Error('照会がタイムアウトしました')); }, 12000);
+      function cleanup() { clearTimeout(timer); delete window[cb]; sc.remove(); }
+      window[cb] = j => { cleanup(); resolve(j); };
+      sc.onerror = () => { cleanup(); reject(new Error('照会できませんでした')); };
+      sc.src = ENDPOINT + '?mode=lookup&callback=' + cb
+        + '&id=' + encodeURIComponent(id) + '&pass=' + encodeURIComponent(pass);
+      document.body.appendChild(sc);
+    });
+  }
+
   const show = (id, on) => { $(id).hidden = !on; };
 
   $('staffBtn').addEventListener('click', () => {
@@ -560,8 +693,7 @@ button,select,input{font:inherit}
         if (pass !== 'apra') throw new Error('パスコードが違います');
         throw new Error('動作確認モードのため、審査結果は表示できません');
       } else {
-        const url = ENDPOINT + '?mode=lookup&id=' + encodeURIComponent(lastId) + '&pass=' + encodeURIComponent(pass);
-        j = await (await fetch(url)).json();
+        j = await lookupJsonp(lastId, pass);
       }
       if (!j.ok) throw new Error(j.error === 'bad pass' ? 'パスコードが違います' : '照会できませんでした');
 
