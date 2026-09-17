@@ -94,6 +94,13 @@ body.testing{padding-top:38px}
 body.testing::after{content:"";position:fixed;inset:0;border:4px solid var(--warn);pointer-events:none;z-index:45}
 body.testing .wrap{position:relative}
 body.testing .staff{border-color:var(--warn);background:var(--warn-bg);border-width:2px}
+.caseerr{background:var(--ng-bg);border:1px solid var(--ng);color:var(--ng);border-radius:var(--r);
+  padding:16px 18px;margin-bottom:14px;font-size:14px;line-height:1.7}
+.caseerr b{display:block;font-size:16px;margin-bottom:4px}
+.fixed{display:grid;grid-template-columns:auto 1fr;gap:0;margin:0;font-size:15px}
+.fixed dt{color:var(--sub);font-size:13px;padding:8px 0;border-bottom:1px solid var(--rule-soft)}
+.fixed dd{margin:0;text-align:right;padding:8px 0;border-bottom:1px solid var(--rule-soft);font-weight:700}
+.fixed dt:last-of-type,.fixed dd:last-of-type{border-bottom:none}
 .tbadge{display:inline-block;font-size:10px;letter-spacing:.06em;background:var(--warn);color:#fff;border-radius:3px;padding:1px 6px;margin-left:8px;vertical-align:2px}
 .tpass{display:flex;gap:8px;align-items:center;margin:0 0 14px;flex-wrap:wrap}
 .tpass[hidden]{display:none}
@@ -160,7 +167,9 @@ h1{-webkit-user-select:none;user-select:none}
     <button type="button" class="tbtn" id="tpassCancel">閉じる</button>
   </div>
 
-  <section class="card staff">
+  <div class="caseerr" id="caseErr" hidden></div>
+
+  <section class="card staff" id="staffCard">
     <h2>ご案内中のプラン<span class="tbadge" id="tbadge" hidden>TEST</span></h2>
     <div class="f">
       <label for="price">商品金額<span class="req">必須</span></label>
@@ -191,6 +200,16 @@ h1{-webkit-user-select:none;user-select:none}
       </div>
       <p class="hint" id="staffHint">読み込み中です…</p>
     </div>
+  </section>
+
+  <section class="card plan-fixed" id="planFixed" hidden>
+    <h2>ご案内中のプラン<span class="tbadge" id="tbadge2" hidden>TEST</span></h2>
+    <dl class="fixed">
+      <dt>商品金額</dt><dd id="fxPrice">―</dd>
+      <dt>頭金</dt><dd id="fxDown">―</dd>
+      <dt>お支払い回数</dt><dd id="fxTimes">―</dd>
+      <dt>担当者</dt><dd id="fxStaff">―</dd>
+    </dl>
   </section>
 
   <section class="card">
@@ -342,7 +361,7 @@ h1{-webkit-user-select:none;user-select:none}
 (() => {
   // ============ 設定 ============
   // Apps Script をデプロイしたときに表示される「ウェブアプリのURL」に差し替えてください
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzqu8qntVaMIXl_VB6SOxH_9FVoQ2WXcimk5yS2HPsqKayoz1TzNcMx563eH_gzQEPCeg/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec';
   const TOKEN = 'apra-kappu-2026';   // Apps Script 側の TOKEN と同じ文字列にしてください
   const READY = !/XXXX/.test(ENDPOINT);   // ENDPOINT を差し替えるまでは動作確認モードで動きます
 
@@ -375,6 +394,8 @@ h1{-webkit-user-select:none;user-select:none}
 
   const TEST_PASS = 'apra';   // テストモードの切り替えに使うパスコード
   let TESTING = false;   // 既定は本番。画面を開くたびに必ず本番から始まります
+  let CASE = null;       // 発行URLから開いたときの案件情報
+  const CASE_KEY = new URLSearchParams(location.search).get('k') || '';
 
   const state = { sex: '', hh: 0, hc: '', debts: [] };
   let STAFF = null;   // 使用者リスト（読み込めるまで null）
@@ -406,6 +427,48 @@ h1{-webkit-user-select:none;user-select:none}
   ['staffName', 'lastName', 'firstName', 'lastKana', 'firstKana', 'tel', 'zip', 'pref', 'city', 'addr1', 'addr2', 'birth'].forEach(id => $(id).addEventListener('input', check));
   $('agree').addEventListener('change', check);
   sel.addEventListener('change', check);
+
+  // ============ 発行URLから開いたとき ============
+  async function loadCase() {
+    if (!CASE_KEY) return;
+    // 担当者が入れる欄は隠して、内容は読み取り専用で見せる
+    $('staffCard').hidden = true;
+    $('planFixed').hidden = false;
+    if (!READY) {
+      CASE = { staff: '（動作確認）', price: 902000, down: 0, times: 60 };
+      showCase(); return;
+    }
+    try {
+      const j = await jsonp(ENDPOINT + '?mode=case&token=' + encodeURIComponent(TOKEN) + '&key=' + encodeURIComponent(CASE_KEY));
+      if (!j.ok) throw new Error(j.error);
+      CASE = j;
+      if (j.is_test) { TESTING = true; applyTest(); }
+      showCase();
+    } catch (e) {
+      const msg = {
+        'expired': ['このURLは期限切れです', 'お手数ですが、担当者へご連絡ください。新しいURLをお送りします。'],
+        'used': ['このURLは入力済みです', 'すでにご入力いただいています。結果は担当者よりご案内いたします。'],
+        'not found': ['このURLは無効です', 'お手数ですが、担当者へご連絡ください。']
+      }[String(e.message)] || ['読み込めませんでした', '通信環境をご確認のうえ、画面を開き直してください。'];
+      $('caseErr').innerHTML = `<b>${msg[0]}</b>${msg[1]}`;
+      $('caseErr').hidden = false;
+      $('planFixed').hidden = true;
+      $('form').querySelectorAll('section.card, .bar').forEach(el => { if (el !== $('caseErr')) el.hidden = true; });
+      $('bar').hidden = true;
+    }
+  }
+  function showCase() {
+    $('price').value = Number(CASE.price).toLocaleString('ja-JP');
+    $('down').value = Number(CASE.down).toLocaleString('ja-JP');
+    $('times').value = String(CASE.times);
+    $('staffName').value = CASE.staff;
+    $('fxPrice').textContent = Number(CASE.price).toLocaleString('ja-JP') + '円';
+    $('fxDown').textContent = Number(CASE.down).toLocaleString('ja-JP') + '円';
+    $('fxTimes').textContent = CASE.times + '回';
+    $('fxStaff').textContent = CASE.staff;
+    $('tbadge2').hidden = !TESTING;
+    check();
+  }
 
   // ============ 担当者プルダウン（使用者リスト） ============
   function jsonp(url) {
@@ -499,6 +562,7 @@ h1{-webkit-user-select:none;user-select:none}
   document.addEventListener('click', e => { if (!$('combo').contains(e.target)) closeList(); });
 
   loadStaff();
+  loadCase();
 
   // 年齢
   function age() {
@@ -604,7 +668,7 @@ h1{-webkit-user-select:none;user-select:none}
     const missing = [];
     if (!parse(v('price'))) missing.push('商品金額');
     const staffName = v('staffName');
-    const staffOk = STAFF ? STAFF.some(s => s.name === staffName) : staffName.length > 0;
+    const staffOk = CASE ? true : (STAFF ? STAFF.some(s => s.name === staffName) : staffName.length > 0);
     if (!staffOk) missing.push(staffName && STAFF ? '担当者名（一覧から選んでください）' : '担当者名');
     $('staffName').parentElement.classList.toggle('bad', !!staffName && !staffOk);
     ['lastName', 'firstName', 'lastKana', 'firstKana'].forEach(id => { if (!v(id)) missing.push('お名前'); });
@@ -651,6 +715,7 @@ h1{-webkit-user-select:none;user-select:none}
       income: parse(v('income')), household: state.hh, housing: state.hc,
       debts: state.debts.map(d => ({ type: d.type, monthly: Number(d.monthly) || 0, months: Number(d.months) || 0 })),
       is_test: TESTING,
+      case_key: CASE_KEY,
       user_agent: navigator.userAgent
     };
     try {
@@ -684,8 +749,11 @@ h1{-webkit-user-select:none;user-select:none}
     } catch (e) {
       btn.disabled = false; btn.textContent = '入力内容を送信する';
       const msg = $('barmsg');
-      msg.textContent = String(e.message) === 'bad staff'
-        ? '担当者名が使用者リストにありません。一覧から選び直してください'
+      const m = String(e.message);
+      msg.textContent = m === 'bad staff' ? '担当者名が使用者リストにありません。一覧から選び直してください'
+        : m === 'expired' ? 'このURLは期限切れです。担当者へご連絡ください'
+        : m === 'used' ? 'このURLは入力済みです。結果は担当者よりご案内いたします'
+        : m === 'not found' ? 'このURLは無効です。担当者へご連絡ください'
         : '送信できませんでした。通信環境をご確認のうえ、もう一度お試しください';
       msg.classList.add('bad');
     }
@@ -706,6 +774,7 @@ h1{-webkit-user-select:none;user-select:none}
     tapTimer = setTimeout(() => { taps = 0; }, 1200);
     if (taps < 3) return;
     taps = 0;
+    if (CASE_KEY) return;   // 発行URLから開いたときは切り替えない
     if (TESTING) { TESTING = false; applyTest(); return; }   // オンのときは即オフ
     $('tpass').hidden = false; $('tpassInput').focus();
   });

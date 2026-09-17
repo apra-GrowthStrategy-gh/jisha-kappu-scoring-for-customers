@@ -131,6 +131,10 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
           <td>FSが開いて<br>お客さまに渡す</td>
         </tr>
         <tr>
+          <td><b>入力URLの発行</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/anken-hakko.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/anken-hakko.html</a><button type="button" class="copy">コピー</button></td>
+          <td>遠隔のとき<br>FSが開く</td>
+        </tr>
+        <tr>
           <td><b>審査結果の確認</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html</a><button type="button" class="copy">コピー</button></td>
           <td>FS<br>（あとから見るとき）</td>
         </tr>
@@ -153,7 +157,7 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
   </section>
 
   <section>
-    <h2 id="flow">FSの使い方</h2>
+    <h2 id="flow">FSの使い方（対面）</h2>
     <ol class="steps">
       <li>
         <h3>商品の情報を先に入れる</h3>
@@ -203,6 +207,17 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
         </ul>
       </li>
     </ol>
+  </section>
+
+  <section>
+    <h2 id="remote">FSの使い方（遠隔）</h2>
+    <p>お客さまと離れているときは、FSが<b>入力URLの発行</b>で案件を作り、URLをメールやLINEで送ります。お客さまは商品情報が入った状態の画面を開き、個人情報と収入だけを入力します。</p>
+    <ul>
+      <li>URLは<b>発行から72時間</b>で失効します</li>
+      <li><b>1回入力すると無効</b>になります（使い回しできません）</li>
+      <li>送信されると<b>Slackに通知</b>が流れます</li>
+    </ul>
+    <p>発行の履歴は、台帳の「発行URL」シートに残ります。状態が「未使用」のまま期限を過ぎているものは、お客さまが入力していない案件です。</p>
   </section>
 
   <section>
@@ -265,6 +280,19 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
       <b>反映のタイミング</b>
       追加や変更は、お客さま入力画面を開き直せばすぐ反映されます。デプロイは不要です。
     </div>
+
+    <h3>発行URLシートの見方</h3>
+    <table>
+      <thead><tr><th>列</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td>キー</td><td>URLの末尾に付く文字列</td></tr>
+        <tr><td>担当者／商品金額／頭金／支払回数</td><td>発行時にFSが入れた内容</td></tr>
+        <tr><td>お客さまメモ</td><td>案件を探すためのメモ（お客さまには見えません）</td></tr>
+        <tr><td>有効期限</td><td>発行から72時間後</td></tr>
+        <tr><td>状態</td><td>未使用／使用済</td></tr>
+        <tr><td>受付番号</td><td>入力完了後に入ります。受付シートと突き合わせられます</td></tr>
+      </tbody>
+    </table>
 
     <h3>テストと本番の見分け方</h3>
     <p>動作確認のために送ったデータは、次の2つで見分けられます。集計するときは<b>「区分」が「本番」の行だけ</b>を対象にしてください。</p>

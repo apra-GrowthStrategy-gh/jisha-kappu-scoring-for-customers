@@ -126,6 +126,10 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
           <td>FSが開いて<br>お客さまに渡す</td>
         </tr>
         <tr>
+          <td><b>入力URLの発行</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/anken-hakko.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/anken-hakko.html</a><button type="button" class="copy">コピー</button></td>
+          <td>遠隔のとき<br>FSが開く</td>
+        </tr>
+        <tr>
           <td><b>審査結果の確認</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html</a><button type="button" class="copy">コピー</button></td>
           <td>FS<br>（あとから見るとき）</td>
         </tr>
@@ -136,7 +140,7 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
   </section>
 
   <section>
-    <h2 id="flow">FSの使い方</h2>
+    <h2 id="flow">FSの使い方（対面）</h2>
     <ol class="steps">
       <li>
         <h3>商品の情報を先に入れる</h3>
@@ -184,6 +188,38 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
           <li><b>結果を隠す</b> … 元の完了画面に戻ります</li>
           <li><b>次のお客さまの入力へ</b> … 最初の入力画面に戻ります</li>
         </ul>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 id="remote">FSの使い方（遠隔）</h2>
+    <p>お客さまと離れているときは、入力用のURLを送ります。</p>
+    <ol class="steps">
+      <li>
+        <h3>URLを発行する</h3>
+        <p><b>入力URLの発行</b>を開き、担当者名・パスコード（<code>apra</code>）・商品金額・頭金・回数を入れて「URLを発行する」を押します。</p>
+        <p>お客さま名のメモも入れておくと、あとで探しやすくなります。</p>
+      </li>
+      <li>
+        <h3>お客さまに送る</h3>
+        <p>「文面ごとコピー」を押すと、案内文とURLがまとめてコピーされます。メールやLINEに貼って送ってください。文面は直せます。</p>
+        <div class="callout warn">
+          <b>URLの有効期限</b>
+          発行から72時間で使えなくなります。また、1回入力すると無効になります。切れてしまったら、もう一度発行してください。
+        </div>
+      </li>
+      <li>
+        <h3>お客さまが入力する</h3>
+        <p>商品の情報は入力済みで表示されるので、お客さまは個人情報と収入だけを入れます。</p>
+      </li>
+      <li>
+        <h3>Slackの通知を待つ</h3>
+        <p>お客さまが送信すると、Slackに「入力が完了しました」と受付番号が流れます。こちらから確認しにいく必要はありません。</p>
+      </li>
+      <li>
+        <h3>結果を見る</h3>
+        <p><b>審査結果の確認</b>を開き、受付番号とパスコードを入れると可否が出ます。あとは対面のときと同じです。</p>
       </li>
     </ol>
   </section>

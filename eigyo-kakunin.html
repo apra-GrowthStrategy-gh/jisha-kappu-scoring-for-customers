@@ -87,11 +87,27 @@ button,input{font:inherit}
 <script>
 (() => {
   // Apps Script のウェブアプリURLに差し替えてください
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzqu8qntVaMIXl_VB6SOxH_9FVoQ2WXcimk5yS2HPsqKayoz1TzNcMx563eH_gzQEPCeg/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec';
   const READY = !/XXXX/.test(ENDPOINT);
 
   const $ = id => document.getElementById(id);
   const KEY = 'apra-kappu-pass';
+
+  // Googleの転送に影響されないよう、JSONPで取りにいく
+  function lookupJsonp(id, pass) {
+    return new Promise((resolve, reject) => {
+      const cb = 'lkcb' + Date.now();
+      const sc = document.createElement('script');
+      const timer = setTimeout(() => { cleanup(); reject(new Error('照会がタイムアウトしました')); }, 12000);
+      function cleanup() { clearTimeout(timer); delete window[cb]; sc.remove(); }
+      window[cb] = j => { cleanup(); resolve(j); };
+      sc.onerror = () => { cleanup(); reject(new Error('照会できませんでした')); };
+      sc.src = ENDPOINT + '?mode=lookup&callback=' + cb
+        + '&id=' + encodeURIComponent(id) + '&pass=' + encodeURIComponent(pass);
+      document.body.appendChild(sc);
+    });
+  }
+
 
   try { const p = sessionStorage.getItem(KEY); if (p) $('pass').value = p; } catch (e) {}
 
@@ -108,8 +124,7 @@ button,input{font:inherit}
     $('res').classList.remove('on'); $('steps').hidden = true;
     try {
       if (!READY) throw new Error('送信先が未設定です。Apps ScriptのURLを設定してください');
-      const url = ENDPOINT + '?mode=lookup&id=' + encodeURIComponent(id) + '&pass=' + encodeURIComponent(pass);
-      const json = await (await fetch(url)).json();
+      const json = await lookupJsonp(id, pass);
       if (!json.ok) throw new Error(json.error === 'not found' ? '受付番号が見つかりません' : json.error === 'bad pass' ? 'パスコードが違います' : '照会できませんでした');
       try { sessionStorage.setItem(KEY, pass); } catch (e) {}
 
