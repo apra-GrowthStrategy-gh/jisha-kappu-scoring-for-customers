@@ -84,6 +84,25 @@ button,select,input{font:inherit}
 .agree{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-2);line-height:1.55}
 .agree input{width:20px;height:20px;margin:2px 0 0;flex:none}
 
+.tbar{position:fixed;left:0;right:0;top:0;z-index:50;background:repeating-linear-gradient(135deg,#B7791F,#B7791F 14px,#9A6212 14px,#9A6212 28px);
+  color:#fff;font-size:13px;font-weight:700;text-align:center;padding:9px 12px;letter-spacing:.03em;
+  box-shadow:0 2px 10px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;gap:10px}
+.tbar .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+@media (prefers-reduced-motion:reduce){.tbar .dot{animation:none}}
+body.testing{padding-top:38px}
+body.testing::after{content:"";position:fixed;inset:0;border:4px solid var(--warn);pointer-events:none;z-index:45}
+body.testing .wrap{position:relative}
+body.testing .staff{border-color:var(--warn);background:var(--warn-bg);border-width:2px}
+.tbadge{display:inline-block;font-size:10px;letter-spacing:.06em;background:var(--warn);color:#fff;border-radius:3px;padding:1px 6px;margin-left:8px;vertical-align:2px}
+.tpass{display:flex;gap:8px;align-items:center;margin:0 0 14px;flex-wrap:wrap}
+.tpass[hidden]{display:none}
+.tpass .ib{flex:1;min-width:130px}
+.tpass .ib input{font-size:15px;padding:9px 0;text-align:left}
+.tbtn{border:1px solid var(--rule);background:#FAFBFC;border-radius:6px;padding:9px 14px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.tbtn:hover{border-color:var(--ink-2);color:var(--ink)}
+h1{-webkit-user-select:none;user-select:none}
+[hidden]{display:none !important}
 .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(238,240,244,.96);backdrop-filter:blur(6px);
   border-top:1px solid var(--rule);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
 .bar .inner{max-width:560px;margin:0 auto}
@@ -102,6 +121,7 @@ button,select,input{font:inherit}
 .done .id span{display:block;font-size:12px;color:var(--sub)}
 .done .id b{font-size:24px;letter-spacing:.06em}
 .demo{max-width:340px;margin:12px auto 0;font-size:12px;line-height:1.5;color:var(--warn);background:var(--warn-bg);border-radius:6px;padding:8px 10px}
+.donetest{max-width:340px;margin:12px auto 0;font-size:13px;font-weight:700;color:#fff;background:var(--warn);border-radius:6px;padding:9px 12px}
 .done .back{margin-top:22px;font-size:13px;color:var(--sub)}
 .staffarea{max-width:340px;margin:34px auto 0;padding-top:20px;border-top:1px solid var(--rule)}
 .staffbtn{width:100%;padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--sub);font-size:13px;cursor:pointer}
@@ -126,12 +146,22 @@ button,select,input{font:inherit}
 </head>
 <body>
 
+<div class="tbar" id="tbar" hidden>
+  <span class="dot"></span>テストモード中 ― この送信は集計に入りません<span class="dot"></span>
+</div>
+
 <div class="wrap" id="form">
   <h1>お申し込み内容の確認</h1>
-  <p class="lead">お支払いプランのご案内にあたり、以下をご入力ください。入力いただいた内容は、お手続きの確認以外には使用しません。</p>
+  <p class="lead" id="lead">お支払いプランのご案内にあたり、以下をご入力ください。入力いただいた内容は、お手続きの確認以外には使用しません。</p>
+
+  <div class="tpass" id="tpass" hidden>
+    <div class="ib"><input id="tpassInput" type="password" placeholder="パスコード" autocomplete="off"></div>
+    <button type="button" class="tbtn" id="tpassGo">確定</button>
+    <button type="button" class="tbtn" id="tpassCancel">閉じる</button>
+  </div>
 
   <section class="card staff">
-    <h2>ご案内中のプラン</h2>
+    <h2>ご案内中のプラン<span class="tbadge" id="tbadge" hidden>TEST</span></h2>
     <div class="f">
       <label for="price">商品金額<span class="req">必須</span></label>
       <div class="ib num"><input id="price" inputmode="numeric" autocomplete="off"><i>円</i></div>
@@ -342,6 +372,9 @@ button,select,input{font:inherit}
       check();
     });
   }
+
+  const TEST_PASS = 'apra';   // テストモードの切り替えに使うパスコード
+  let TESTING = false;   // 既定は本番。画面を開くたびに必ず本番から始まります
 
   const state = { sex: '', hh: 0, hc: '', debts: [] };
   let STAFF = null;   // 使用者リスト（読み込めるまで null）
@@ -592,7 +625,10 @@ button,select,input{font:inherit}
     $('submit').disabled = !ok;
     const msg = $('barmsg');
     if (minor) { msg.textContent = '18歳未満の方は担当者にお声がけください'; msg.classList.add('bad'); }
-    else if (ok) { msg.textContent = READY ? '入力内容をご確認のうえ、送信してください' : '動作確認モード：送信しても保存されません'; msg.classList.remove('bad'); }
+    else if (ok) {
+      msg.textContent = !READY ? '動作確認モード：送信しても保存されません' : '入力内容をご確認のうえ、送信してください';
+      msg.classList.remove('bad');
+    }
     else { msg.textContent = `未入力：${uniq.slice(0, 3).join('、')}${uniq.length > 3 ? ` ほか${uniq.length - 3}件` : ''}`; msg.classList.remove('bad'); }
     return ok;
   }
@@ -614,6 +650,7 @@ button,select,input{font:inherit}
       price: parse(v('price')), down: parse(v('down')) || 0, times: Number(sel.value),
       income: parse(v('income')), household: state.hh, housing: state.hc,
       debts: state.debts.map(d => ({ type: d.type, monthly: Number(d.monthly) || 0, months: Number(d.months) || 0 })),
+      is_test: TESTING,
       user_agent: navigator.userAgent
     };
     try {
@@ -630,6 +667,12 @@ button,select,input{font:inherit}
       $('form').style.display = 'none'; $('bar').style.display = 'none';
       $('doneId').textContent = json.id;
       window.__setId(json.id);
+      if (TESTING) {
+        const t = document.createElement('p');
+        t.className = 'donetest';
+        t.textContent = 'テストとして記録しました（集計には入りません）';
+        $('done').querySelector('.id').after(t);
+      }
       if (!READY) {
         const n = document.createElement('p');
         n.className = 'demo';
@@ -647,6 +690,35 @@ button,select,input{font:inherit}
       msg.classList.add('bad');
     }
   });
+
+  // ============ テストモード（隠し機能）============
+  // タイトルを3回続けてタップすると、パスコード欄が出ます。
+  function applyTest() {
+    document.body.classList.toggle('testing', TESTING);
+    $('tbar').hidden = !TESTING;
+    $('tbadge').hidden = !TESTING;
+    check();
+  }
+  let taps = 0, tapTimer = null;
+  document.querySelector('h1').addEventListener('click', () => {
+    taps++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { taps = 0; }, 1200);
+    if (taps < 3) return;
+    taps = 0;
+    if (TESTING) { TESTING = false; applyTest(); return; }   // オンのときは即オフ
+    $('tpass').hidden = false; $('tpassInput').focus();
+  });
+
+  $('tpassCancel').addEventListener('click', () => {
+    $('tpass').hidden = true; $('tpassInput').value = '';
+  });
+  $('tpassInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('tpassGo').click(); });
+  $('tpassGo').addEventListener('click', () => {
+    if ($('tpassInput').value.trim() === TEST_PASS) { TESTING = true; applyTest(); }
+    $('tpass').hidden = true; $('tpassInput').value = '';
+  });
+  applyTest();
 
   buildDebts(); check();
 
