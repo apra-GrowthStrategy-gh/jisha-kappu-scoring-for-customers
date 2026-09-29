@@ -61,6 +61,10 @@ button,select,input{font:inherit}
 .seg button{flex:1;border:none;border-right:1px solid var(--rule);background:transparent;color:var(--ink-2);padding:11px 4px;font-size:14px;cursor:pointer}
 .seg button:last-child{border-right:none}
 .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.seg.col{flex-direction:column}
+.seg.col button{border-right:none;border-bottom:1px solid var(--rule);text-align:left;padding:13px 14px}
+.seg.col button:last-child{border-bottom:none}
+#emgRelWrap{margin-top:10px}
 .plans{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .plan{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--rule);background:#fff;color:var(--ink-2);cursor:pointer}
 .plan[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
@@ -308,22 +312,23 @@ h1{-webkit-user-select:none;user-select:none}
   </section>
 
   <section class="card">
-    <h2>緊急連絡先</h2>
-    <p class="note">ご本人と連絡が取れないときのための連絡先です。ご家族など、ご本人以外の方をご記入ください。</p>
-    <div class="two">
-      <div class="f">
-        <label for="emgName">お名前<span class="req">必須</span></label>
-        <div class="ib"><input id="emgName" autocomplete="off" placeholder="山田花子"></div>
-      </div>
-      <div class="f">
-        <label for="emgRel">ご本人との関係<span class="req">必須</span></label>
-        <div class="ib"><input id="emgRel" autocomplete="off" placeholder="母"></div>
+    <h2>ご提出いただくもの</h2>
+    <p class="note">ここでは<b>どれをご提出いただくか</b>だけお選びください。中身は、のちほど相談センターのLINEでおうかがいします。</p>
+    <div class="f">
+      <span class="lab" id="idLab">身分証<span class="req">必須</span></span>
+      <div class="seg col" role="group" aria-labelledby="idLab" id="idType">
+        <button type="button" data-v="免許証">運転免許証</button><button type="button" data-v="マイナンバーカード">マイナンバーカード</button><button type="button" data-v="それ以外">それ以外（要相談）</button>
       </div>
     </div>
     <div class="f">
-      <label for="emgTel">電話番号<span class="req">必須</span><small>（ハイフンなし）</small></label>
-      <div class="ib"><input id="emgTel" type="tel" inputmode="numeric" placeholder="09098765432"></div>
-      <p class="err" id="emgTelErr">電話番号を、ハイフンなしで入力してください</p>
+      <span class="lab" id="emgLab">緊急連絡先<span class="req">必須</span></span>
+      <div class="seg col" role="group" aria-labelledby="emgLab" id="emgType">
+        <button type="button" data-v="お勤め先">お勤め先</button><button type="button" data-v="ご親族">契約書に記載以外のご親族</button><button type="button" data-v="それ以外">それ以外（要相談）</button>
+      </div>
+      <div class="f" id="emgRelWrap" hidden>
+        <label for="emgRel">ご本人との続柄<span class="req">必須</span></label>
+        <div class="ib"><input id="emgRel" autocomplete="off" placeholder="母"></div>
+      </div>
     </div>
   </section>
 
@@ -435,7 +440,7 @@ h1{-webkit-user-select:none;user-select:none}
   let CASE = null;       // 発行URLから開いたときの案件情報
   const CASE_KEY = new URLSearchParams(location.search).get('k') || '';
 
-  const state = { sex: '', hh: 0, hc: '', legal: '', debts: [] };
+  const state = { sex: '', hh: 0, hc: '', legal: '', idType: '', emgType: '', debts: [] };
   let STAFF = null;   // 使用者リスト（読み込めるまで null）
   let seq = 0;
 
@@ -456,14 +461,18 @@ h1{-webkit-user-select:none;user-select:none}
     document.querySelectorAll('.plan').forEach(x => x.setAttribute('aria-pressed', x === b));
     check();
   }));
-  [['sex', 'sex'], ['hh', 'hh'], ['hc', 'hc'], ['legal', 'legal']].forEach(([id, key]) =>
+  [['sex', 'sex'], ['hh', 'hh'], ['hc', 'hc'], ['legal', 'legal'], ['idType', 'idType'], ['emgType', 'emgType']].forEach(([id, key]) =>
     $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       state[key] = key === 'hh' ? Number(b.dataset.v) : b.dataset.v;
       $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+      if (key === 'emgType') {
+        $('emgRelWrap').hidden = state.emgType !== 'ご親族';
+        if (state.emgType !== 'ご親族') $('emgRel').value = '';
+      }
       check();
     })));
   ['staffName', 'lastName', 'firstName', 'lastKana', 'firstKana', 'tel', 'zip', 'pref', 'city', 'addr1', 'addr2', 'birth',
-   'emgName', 'emgRel', 'emgTel'].forEach(id => $(id).addEventListener('input', check));
+   'emgRel'].forEach(id => $(id).addEventListener('input', check));
   ['agree1', 'agree2', 'agree3'].forEach(id => $(id).addEventListener('change', check));
   sel.addEventListener('change', check);
 
@@ -719,11 +728,9 @@ h1{-webkit-user-select:none;user-select:none}
     if (!income) missing.push('税込年収');
     if (!state.hh) missing.push('世帯人数');
     if (!state.hc) missing.push('お住まい');
-    const emgTel = digits(v('emgTel'));
-    const emgTelOk = /^0\d{8,10}$/.test(emgTel);
-    $('emgTelErr').classList.toggle('on', emgTel.length > 0 && !emgTelOk);
-    $('emgTel').parentElement.classList.toggle('bad', emgTel.length > 0 && !emgTelOk);
-    if (!v('emgName') || !v('emgRel') || !emgTelOk) missing.push('緊急連絡先');
+    if (!state.idType) missing.push('身分証の選択');
+    if (!state.emgType) missing.push('緊急連絡先の選択');
+    else if (state.emgType === 'ご親族' && !v('emgRel')) missing.push('緊急連絡先の続柄');
     if (!state.legal) missing.push('過去のお手続きの有無');
     state.debts.forEach((d, i) => { if (!Number(d.monthly)) missing.push(`お借入${i + 1}件目の返済額`); });
     if (!($('agree1').checked && $('agree2').checked && $('agree3').checked)) missing.push('確認事項のチェック');
@@ -758,7 +765,7 @@ h1{-webkit-user-select:none;user-select:none}
       zip: digits(v('zip')), pref: v('pref'), city: v('city'), address1: v('addr1'), address2: v('addr2'),
       price: parse(v('price')), down: parse(v('down')) || 0, times: Number(sel.value),
       income: parse(v('income')), household: state.hh, housing: state.hc,
-      emg_name: v('emgName'), emg_rel: v('emgRel'), emg_tel: digits(v('emgTel')),
+      id_type: state.idType, emg_type: state.emgType, emg_rel: state.emgType === 'ご親族' ? v('emgRel') : '',
       legal_issue: state.legal === 'yes',
       debts: state.debts.map(d => ({ type: d.type, monthly: Number(d.monthly) || 0, months: Number(d.months) || 0 })),
       is_test: TESTING,
