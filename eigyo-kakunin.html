@@ -44,6 +44,12 @@ button,input{font:inherit}
 .res .who{font-size:13px;color:var(--ink-2);margin:8px 0 0}
 .res .rm{font-size:14px;line-height:1.6;margin:14px 0 0;padding:10px 12px;background:rgba(255,255,255,.8);border-radius:6px;text-align:left}
 .res .rm b{display:block;font-size:12px;color:var(--sub);margin-bottom:2px}
+.detail{margin:14px 0 0;text-align:left;background:#fff;border:1px solid var(--rule);border-radius:6px;padding:12px 14px}
+.detail>b{display:block;font-size:12px;color:var(--sub);margin-bottom:6px}
+.detail dl{display:grid;grid-template-columns:auto 1fr;gap:0;margin:0;font-size:13px}
+.detail dt{color:var(--sub);padding:5px 10px 5px 0;border-bottom:1px solid var(--rule-soft);white-space:nowrap}
+.detail dd{margin:0;padding:5px 0;text-align:right;border-bottom:1px solid var(--rule-soft);font-weight:700;word-break:break-all}
+.detail .alert{color:var(--ng)}
 .steps{padding:14px 18px}
 .steps h2{font-size:13px;margin:0 0 8px;color:var(--ink-2)}
 .steps ol{margin:0;padding-left:1.3em;font-size:13px;color:var(--ink-2)}
@@ -61,6 +67,7 @@ button,input{font:inherit}
     <p class="v" id="v">―</p>
     <p class="who" id="who"></p>
     <div class="rm" id="rm" hidden><b>RMからの連絡</b><span id="rmText"></span></div>
+    <div class="detail" id="detail" hidden><b>申込内容と審査詳細（RM）</b><dl id="detailList"></dl></div>
   </div>
 
   <section class="card">
@@ -132,19 +139,28 @@ button,input{font:inherit}
       const box = $('res');
       box.dataset.s = ok ? 'ok' : hold ? 'hold' : 'ng';
       $('mk').textContent = ok ? '可' : hold ? '？' : '否';
-      $('v').textContent = ok ? '可決' : hold ? '要確認' : '否決';
+      $('v').textContent = ok ? '手続き可' : hold ? '要確認' : '手続き不可';
       $('who').textContent = `${json.name}さま（受付番号 ${json.id}）`;
       $('rm').hidden = !json.rm_note;
       $('rmText').textContent = json.rm_note || '';
+      const det = $('detail');
+      if (json.detail) {
+        $('detailList').innerHTML = Object.entries(json.detail)
+          .filter(([, v]) => v !== '' && v !== null && v !== undefined)
+          .map(([k, v]) => {
+            const num = typeof v === 'number' && ['商品金額','頭金','月々支払額','年間支払額','税込年収','生活維持費','他社毎月返済','算定スコア','最低年収','上限元金'].includes(k);
+            const cls = (k === 'アラート' || k === '法的事故' && v === 'あり') ? ' class="alert"' : '';
+            return `<dt>${k}</dt><dd${cls}>${num ? Number(v).toLocaleString('ja-JP') : v}</dd>`;
+          }).join('');
+        det.hidden = false;
+      } else det.hidden = true;
       box.classList.add('on');
 
       const steps = ok
-        ? (json.need_rm
-            ? ['RMへ「可決」と受付番号を共有し、締結の可否を確認してください。', 'RMの確認後、お客さまにご案内してください。', '身分証・携帯名義・就業状況を確認してください。']
-            : ['お客さまに「お手続きを進められます」とご案内してください。', '身分証・携帯名義・就業状況を確認してください。', '直近1か月の給与明細と緊急連絡先をお預かりしてください。'])
+        ? ['RMより締結許可の共有があるまでお待ちください。', '身分証・携帯名義・就業状況を確認してください。']
         : hold
-          ? ['入力内容に不足があります。RMへ受付番号を共有して確認してください。']
-          : ['お客さまには「このプランでのお手続きは難しい」とお伝えください。', 'RMへ受付番号を共有してください。金額や頭金を変えれば通せる場合があり、条件はRMから連絡します。', '理由はお客さまにお伝えしないでください。'];
+          ? ['入力内容に不足があります。該当する審査結果通知スレッドで共有してください。']
+          : ['条件つき再審査可能な場合があります。', '再審査を希望する場合は、該当する審査結果通知スレッドで共有してください。'];
       $('stepList').innerHTML = steps.map(s => `<li>${s}</li>`).join('');
       $('steps').hidden = false;
       window.scrollTo(0, 0);
