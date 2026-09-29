@@ -159,7 +159,10 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
           <li>お名前、セイ・メイ、生年月日、性別、電話番号</li>
           <li>郵便番号（7桁を入れると住所が自動で入ります）</li>
           <li>税込年収、世帯人数（本人を含む）、お住まい</li>
+          <li>緊急連絡先（お名前・ご本人との関係・電話番号）</li>
+          <li>過去5年以内の債務整理・自己破産の有無</li>
           <li>他社からのお借入（なければ触らなくてOK）</li>
+          <li>確認事項3つのチェック</li>
         </ul>
         <p>未入力があると画面下に「未入力：◯◯」と出て送信できません。すべて埋まると送信ボタンが押せるようになります。</p>
       </li>
@@ -176,9 +179,9 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
           <li>「審査結果を表示」を押す</li>
         </ol>
         <div class="verdicts">
-          <div class="vd ok"><b>可決</b><span>そのままご案内を進めてください</span></div>
-          <div class="vd ng"><b>否決</b><span>「このプランでのお手続きは難しい」とだけ伝えてください</span></div>
-          <div class="vd hold"><b>要確認</b><span>入力に不足があります。RMへ連絡してください</span></div>
+          <div class="vd ok"><b>手続き可</b><span>RMより締結許可の共有があるまでお待ちください</span></div>
+          <div class="vd ng"><b>手続き不可</b><span>条件つき再審査が可能な場合があります</span></div>
+          <div class="vd hold"><b>要確認</b><span>入力に不足があります。審査結果通知スレッドで共有してください</span></div>
         </div>
         <p>画面には、このあと何をするかも表示されます。</p>
       </li>
@@ -226,20 +229,10 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
 
   <section>
     <h2 id="ng">否決だったときの動き</h2>
-    <div class="callout">
-      <b>理由はお客さまに伝えないでください</b>
-      基準を推測されると、次回の申告が変わってしまうためです。
-    </div>
-    <ol>
-      <li>RMに受付番号を共有する</li>
-      <li>RMが台帳を見て、「MPCなら可」「頭金10万円なら満額可」などの条件を返す</li>
-      <li>その条件でお客さまに再提案する</li>
-    </ol>
-    <p>金額や頭金を変えれば通るケースは多いので、その場で断らずRMに投げてください。</p>
-    <div class="callout warn">
-      <b>可決でもRM相談が必要な場合</b>
-      他社からの借入が1件でもあるときは、締結前にRMへ相談してください。画面にも案内が出ます。
-    </div>
+    <ul>
+      <li>条件つき再審査可能な場合があります</li>
+      <li>再審査を希望する場合は該当する審査結果通知スレッドで共有してください</li>
+    </ul>
   </section>
 
   <section>
@@ -251,8 +244,8 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
       <li>債務整理・自己破産の手続き中、または支払い中でないか</li>
       <li>就業しているか</li>
       <li>反社会的勢力との関係、威圧的な言動がないか</li>
+      <li>他社借入が3社以上でないか</li>
     </ul>
-    <p>可決の場合は、直近1か月の給与明細と身分証、緊急連絡先もお預かりしてください。</p>
   </section>
 
   <section>
