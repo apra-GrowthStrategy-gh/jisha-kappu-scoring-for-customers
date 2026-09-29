@@ -113,7 +113,7 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
 
   <div class="callout" style="margin:0 0 16px">
     <b>取り扱い注意</b>
-    このページには審査基準が載っています。FSやお客さまには共有しないでください。FSには<a href="https://jisha-kappu-scoring-for-customers.vercel.app/manual-fs.html" target="_blank" rel="noopener">FS用マニュアル</a>を渡してください。
+    このページはRM専用です。台帳の見方と審査基準が載っているため、FSやお客さまには共有しないでください。現場に渡すのは<a href="https://jisha-kappu-scoring-for-customers.vercel.app/manual-fs.html" target="_blank" rel="noopener">FS用マニュアル</a>だけです（審査基準は載っていません）。
   </div>
 
   <nav class="toc">
@@ -193,9 +193,9 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
           <li>「審査結果を表示」を押す</li>
         </ol>
         <div class="verdicts">
-          <div class="vd ok"><b>可決</b><span>そのままご案内を進めてください</span></div>
-          <div class="vd ng"><b>否決</b><span>「このプランでのお手続きは難しい」とだけ伝えてください</span></div>
-          <div class="vd hold"><b>要確認</b><span>入力に不足があります。RMへ連絡してください</span></div>
+          <div class="vd ok"><b>手続き可</b><span>RMより締結許可の共有があるまでお待ちください</span></div>
+          <div class="vd ng"><b>手続き不可</b><span>条件つき再審査が可能な場合があります</span></div>
+          <div class="vd hold"><b>要確認</b><span>入力に不足があります</span></div>
         </div>
         <p>画面には、このあと何をするかも表示されます。</p>
       </li>
@@ -262,9 +262,43 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
         <tr><td>否決・要確認の理由</td><td>どの条件で落ちたか</td></tr>
         <tr><td><b>組める上限元金</b></td><td>この条件のまま通せる最大の金額</td></tr>
         <tr><td>この条件の最低年収</td><td>通すために必要な年収</td></tr>
+        <tr><td>緊急連絡先／続柄／電話</td><td>お客さまが入力したご家族などの連絡先</td></tr>
+        <tr><td>過去5年の法的事故</td><td>お客さまの申告（あり／なし）</td></tr>
+        <tr><td>アラート</td><td>当てはまった基準。空欄なら該当なし</td></tr>
         <tr><td>算定スコア／返済比率</td><td>判定の中身</td></tr>
+        <tr><td>S6〜S13</td><td>締結までの進捗チェック（下の表）</td></tr>
       </tbody>
     </table>
+
+    <h3>締結までの進捗（S6〜S13）</h3>
+    <p>台帳のいちばん右に、チェックボックスの列が8つ並んでいます。手続きが1つ進むたびに、担当した人がチェックを入れてください。どこで止まっているかが一目で分かります。</p>
+    <table>
+      <thead><tr><th>列</th><th>やること</th><th>担当</th></tr></thead>
+      <tbody>
+        <tr><td>S6 RMより案内送付</td><td>手続き可の方へ、お手続きを進める案内を送る</td><td>RM</td></tr>
+        <tr><td>S7 身分証・職場情報</td><td>身分証と金融連絡先を受け取り、格納する</td><td>RM</td></tr>
+        <tr><td>S8 口座登録完了</td><td>口座登録の案内と、登録の確認</td><td>RM</td></tr>
+        <tr><td>S9 締結許可告知</td><td>口座登録が取れ次第、締結許可を共有</td><td>RM</td></tr>
+        <tr><td>S10 クラウドサイン締結</td><td>自社用クラウドサイン（Zoom限定・録音必須）</td><td>FS / MP+</td></tr>
+        <tr><td>S11 初回振込・頭金回収</td><td>入金まで追いかける。月をまたぐ場合は再締結</td><td>FS / MP+</td></tr>
+        <tr><td>S12 着金の経理確認</td><td>入金と振込事実の確認</td><td>経理</td></tr>
+        <tr><td>S13 進行開始</td><td>プロジェクト進行開始</td><td>FS / MP+</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <b>列が見当たらないとき</b>
+      Apps Script を新しいバージョンで再デプロイし、申し込みが1件入ると、足りない列が自動で追加されます。既存の行やデータには触りません。
+    </div>
+    <h3>アラートと詳細の見方</h3>
+    <p>通知は <code>#rm-自社割賦-審査通知</code> に流れます。1件＝1スレッドです。再審査の希望・追加条件・現場への確認は、<b>その受付番号のスレッドに返信する形</b>で共有してください。</p>
+    <p>次のどれかに当たると、Slack通知に <b>⚠️</b> が付き、台帳の「アラート」列にも理由が入ります。<b>可否そのものは変わりません</b>。RMが目視で拾うための印です。</p>
+    <ul>
+      <li>他社借入が2件以上</li>
+      <li>過去5年以内に法的事故あり（お客さまの申告）</li>
+      <li>手続き可だが余力が少ない（算定スコア − 年間支払額 が36万円以下）</li>
+    </ul>
+    <p>審査結果の確認画面で、パスコードに <code>apra-rm</code> を入れると、申込内容と審査詳細（年収・スコア・返済比率・緊急連絡先・アラート）まで表示されます。FS用の <code>apra</code> では可否だけです。</p>
+
     <h3>使用者リストの管理</h3>
     <p><a href="https://docs.google.com/spreadsheets/d/1VWjgg1VV0LAm7rH1uCc8iPBXwI5aXEgXshrIfk8fdP4/edit" target="_blank" rel="noopener">受付台帳</a>の「使用者リスト」シートに名前を書いた人だけが、お客さま入力画面の担当者プルダウンに出ます。</p>
     <table>
