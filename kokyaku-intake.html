@@ -81,7 +81,10 @@ button,select,input{font:inherit}
 .empty{padding:12px;border:1px solid var(--rule-soft);border-radius:6px;background:#FAFBFC;color:var(--sub);font-size:14px;text-align:center}
 .add{width:100%;margin-top:8px;padding:11px;border:1px dashed var(--ink-2);border-radius:6px;background:transparent;color:var(--ink);font-size:15px;cursor:pointer}
 
-.agree{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-2);line-height:1.55}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-2);line-height:1.55;
+  padding:10px 0;border-bottom:1px solid var(--rule-soft)}
+.agree:last-of-type{border-bottom:none}
+.agree b{display:block;color:var(--ink);font-size:13.5px}
 .agree input{width:20px;height:20px;margin:2px 0 0;flex:none}
 
 .tbar{position:fixed;left:0;right:0;top:0;z-index:50;background:repeating-linear-gradient(135deg,#B7791F,#B7791F 14px,#9A6212 14px,#9A6212 28px);
@@ -305,6 +308,37 @@ h1{-webkit-user-select:none;user-select:none}
   </section>
 
   <section class="card">
+    <h2>緊急連絡先</h2>
+    <p class="note">ご本人と連絡が取れないときのための連絡先です。ご家族など、ご本人以外の方をご記入ください。</p>
+    <div class="two">
+      <div class="f">
+        <label for="emgName">お名前<span class="req">必須</span></label>
+        <div class="ib"><input id="emgName" autocomplete="off" placeholder="山田花子"></div>
+      </div>
+      <div class="f">
+        <label for="emgRel">ご本人との関係<span class="req">必須</span></label>
+        <div class="ib"><input id="emgRel" autocomplete="off" placeholder="母"></div>
+      </div>
+    </div>
+    <div class="f">
+      <label for="emgTel">電話番号<span class="req">必須</span><small>（ハイフンなし）</small></label>
+      <div class="ib"><input id="emgTel" type="tel" inputmode="numeric" placeholder="09098765432"></div>
+      <p class="err" id="emgTelErr">電話番号を、ハイフンなしで入力してください</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>お借入の状況</h2>
+    <div class="f">
+      <span class="lab" id="legalLab">過去5年以内に、債務整理・自己破産などのお手続きをされたことはありますか<span class="req">必須</span></span>
+      <div class="seg" role="group" aria-labelledby="legalLab" id="legal">
+        <button type="button" data-v="no">ない</button><button type="button" data-v="yes">ある</button>
+      </div>
+      <p class="hint">現在お手続き中・お支払い中の場合も「ある」をお選びください</p>
+    </div>
+  </section>
+
+  <section class="card">
     <h2>他社からのお借入</h2>
     <p class="caution">返済内容により審査結果が異なるため、該当する返済内容を正確に選択してください。</p>
     <p class="note">住宅ローンは「お住まい」で確認しているため、こちらには入力不要です。お借入がない場合はそのままで結構です。</p>
@@ -313,10 +347,14 @@ h1{-webkit-user-select:none;user-select:none}
   </section>
 
   <section class="card">
-    <label class="agree">
-      <input type="checkbox" id="agree">
-      <span>入力内容に相違ないこと、お支払いプランのご案内・ご確認のために当社が利用することに同意します。</span>
-    </label>
+    <h2>確認事項</h2>
+    <p class="note">以下の内容をご確認のうえ、チェックを入れて送信してください。</p>
+    <label class="agree"><input type="checkbox" id="agree1">
+      <span><b>入力内容の確認</b>ご入力いただいた内容に間違いや漏れがないことを確認しました。</span></label>
+    <label class="agree"><input type="checkbox" id="agree2">
+      <span><b>申告内容に関するお願い</b>万が一、入力内容に事実と異なる記載があった場合、審査のお見送りや、ご契約後に分割払いの継続がお受けできなくなる場合があることを確認・了承しました。</span></label>
+    <label class="agree"><input type="checkbox" id="agree3">
+      <span><b>個人情報の取り扱いについて</b>お預かりした個人情報は、本サービスの分割審査・契約手続き、および月々のお支払い管理の目的にのみ使用し、適切に管理されることを確認しました。</span></label>
   </section>
 </div>
 
@@ -397,7 +435,7 @@ h1{-webkit-user-select:none;user-select:none}
   let CASE = null;       // 発行URLから開いたときの案件情報
   const CASE_KEY = new URLSearchParams(location.search).get('k') || '';
 
-  const state = { sex: '', hh: 0, hc: '', debts: [] };
+  const state = { sex: '', hh: 0, hc: '', legal: '', debts: [] };
   let STAFF = null;   // 使用者リスト（読み込めるまで null）
   let seq = 0;
 
@@ -418,14 +456,15 @@ h1{-webkit-user-select:none;user-select:none}
     document.querySelectorAll('.plan').forEach(x => x.setAttribute('aria-pressed', x === b));
     check();
   }));
-  [['sex', 'sex'], ['hh', 'hh'], ['hc', 'hc']].forEach(([id, key]) =>
+  [['sex', 'sex'], ['hh', 'hh'], ['hc', 'hc'], ['legal', 'legal']].forEach(([id, key]) =>
     $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       state[key] = key === 'hh' ? Number(b.dataset.v) : b.dataset.v;
       $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
       check();
     })));
-  ['staffName', 'lastName', 'firstName', 'lastKana', 'firstKana', 'tel', 'zip', 'pref', 'city', 'addr1', 'addr2', 'birth'].forEach(id => $(id).addEventListener('input', check));
-  $('agree').addEventListener('change', check);
+  ['staffName', 'lastName', 'firstName', 'lastKana', 'firstKana', 'tel', 'zip', 'pref', 'city', 'addr1', 'addr2', 'birth',
+   'emgName', 'emgRel', 'emgTel'].forEach(id => $(id).addEventListener('input', check));
+  ['agree1', 'agree2', 'agree3'].forEach(id => $(id).addEventListener('change', check));
   sel.addEventListener('change', check);
 
   // ============ 発行URLから開いたとき ============
@@ -680,8 +719,14 @@ h1{-webkit-user-select:none;user-select:none}
     if (!income) missing.push('税込年収');
     if (!state.hh) missing.push('世帯人数');
     if (!state.hc) missing.push('お住まい');
+    const emgTel = digits(v('emgTel'));
+    const emgTelOk = /^0\d{8,10}$/.test(emgTel);
+    $('emgTelErr').classList.toggle('on', emgTel.length > 0 && !emgTelOk);
+    $('emgTel').parentElement.classList.toggle('bad', emgTel.length > 0 && !emgTelOk);
+    if (!v('emgName') || !v('emgRel') || !emgTelOk) missing.push('緊急連絡先');
+    if (!state.legal) missing.push('過去のお手続きの有無');
     state.debts.forEach((d, i) => { if (!Number(d.monthly)) missing.push(`お借入${i + 1}件目の返済額`); });
-    if (!$('agree').checked) missing.push('同意のチェック');
+    if (!($('agree1').checked && $('agree2').checked && $('agree3').checked)) missing.push('確認事項のチェック');
 
     const uniq = [...new Set(missing)];
     const minor = a !== null && a < 18;
@@ -713,6 +758,8 @@ h1{-webkit-user-select:none;user-select:none}
       zip: digits(v('zip')), pref: v('pref'), city: v('city'), address1: v('addr1'), address2: v('addr2'),
       price: parse(v('price')), down: parse(v('down')) || 0, times: Number(sel.value),
       income: parse(v('income')), household: state.hh, housing: state.hc,
+      emg_name: v('emgName'), emg_rel: v('emgRel'), emg_tel: digits(v('emgTel')),
+      legal_issue: state.legal === 'yes',
       debts: state.debts.map(d => ({ type: d.type, monthly: Number(d.monthly) || 0, months: Number(d.months) || 0 })),
       is_test: TESTING,
       case_key: CASE_KEY,
@@ -842,15 +889,13 @@ h1{-webkit-user-select:none;user-select:none}
       const box = $('judge');
       box.dataset.s = ok ? 'ok' : hold ? 'hold' : 'ng';
       $('jmk').textContent = ok ? '可' : hold ? '？' : '否';
-      $('jv').textContent = ok ? '可決' : hold ? '要確認' : '否決';
+      $('jv').textContent = ok ? '手続き可' : hold ? '要確認' : '手続き不可';
       $('jwho').textContent = `${j.name}さま（受付番号 ${j.id}）`;
       const steps = ok
-        ? (j.need_rm
-            ? ['RMへ受付番号を共有し、締結の可否を確認してください。', 'RMの確認後、お客さまにご案内してください。', '身分証・携帯名義・就業状況を確認してください。']
-            : ['お客さまに「お手続きを進められます」とご案内してください。', '身分証・携帯名義・就業状況を確認してください。', '直近1か月の給与明細と緊急連絡先をお預かりしてください。'])
+        ? ['RMより締結許可の共有があるまでお待ちください。', '身分証・携帯名義・就業状況を確認してください。']
         : hold
-          ? ['入力内容に不足があります。RMへ受付番号を共有して確認してください。']
-          : ['お客さまには「このプランでのお手続きは難しい」とお伝えください。', 'RMへ受付番号を共有してください。金額や頭金を変えれば通せる場合があり、条件はRMから連絡します。', '理由はお客さまにお伝えしないでください。'];
+          ? ['入力内容に不足があります。該当する審査結果通知スレッドで共有してください。']
+          : ['条件つき再審査可能な場合があります。', '再審査を希望する場合は、該当する審査結果通知スレッドで共有してください。'];
       $('jsteps').innerHTML = steps.map(t => `<li>${t}</li>`).join('');
       show('passbox', false); show('judge', true);
       $('pass').value = '';
