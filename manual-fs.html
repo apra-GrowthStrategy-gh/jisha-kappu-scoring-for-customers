@@ -123,11 +123,11 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
       <tbody>
         <tr>
           <td><b>お客さま入力</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/kokyaku-intake.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/kokyaku-intake.html</a><button type="button" class="copy">コピー</button></td>
-          <td>FSが開いて<br>お客さまに渡す</td>
+          <td>発行したURLから<br>お客さまが開く</td>
         </tr>
         <tr>
           <td><b>入力URLの発行</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/anken-hakko.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/anken-hakko.html</a><button type="button" class="copy">コピー</button></td>
-          <td>遠隔のとき<br>FSが開く</td>
+          <td><b>FSが最初に開く</b></td>
         </tr>
         <tr>
           <td><b>審査結果の確認</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html</a><button type="button" class="copy">コピー</button></td>
@@ -136,25 +136,39 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
       </tbody>
     </table>
     <div class="pass"><span>審査結果を表示するパスコード</span><b>apra</b><span>お客さまには教えないでください</span></div>
-    <p style="margin-top:10px">お客さま入力のURLは、スマホやタブレットにブックマークしておくと毎回探さずに済みます。</p>
+    <p style="margin-top:10px"><b>入力URLの発行</b>を、スマホやタブレットにブックマークしておくと毎回探さずに済みます。お客さま入力のURLは発行のたびに変わるので、ブックマークしても使えません。</p>
   </section>
 
   <section>
-    <h2 id="flow">FSの使い方（対面）</h2>
+    <h2 id="flow">FSの使い方</h2>
+    <p>流れは1本です。<b>まず入力URLを発行し、お客さまに送って開いてもらいます。</b>入力はお客さまご自身の端末で行っていただきます。</p>
     <ol class="steps">
       <li>
-        <h3>商品の情報を先に入れる</h3>
-        <p>お客さまに渡す前に、<b>「担当者記入」と書かれた一番上の枠</b>を埋めます。</p>
+        <h3>入力URLを発行する</h3>
+        <p><b>入力URLの発行</b>を開き、次を入れて「URLを発行する」を押します。</p>
         <ul>
-          <li>商品金額（MP/VP などのボタンを押すと自動で入ります）</li>
-          <li>頭金（なければ 0 のまま）</li>
-          <li>支払回数（通常は 60回）</li>
           <li>担当者名（名前を打つと候補が出ます。一覧にない名前は選べません）</li>
+          <li>パスコード <code>apra</code></li>
+          <li>商品金額（MP/VP などのボタンを押すと自動で入ります）</li>
+          <li>頭金（なければ 0 のまま）／支払回数（通常は 60回）</li>
+          <li>お客さま名のメモ（任意。あとで探しやすくなります）</li>
         </ul>
+        <div class="callout warn">
+          <b>URLの有効期限</b>
+          発行から72時間で使えなくなります。また、1回入力すると無効になります。切れてしまったら、もう一度発行してください。
+        </div>
       </li>
       <li>
-        <h3>端末をお客さまに渡す</h3>
-        <p>お客さまが入力するのはここからです。</p>
+        <h3>お客さまに開いてもらう</h3>
+        <p>「<b>文面ごとコピー</b>」を押すと、案内文とURLがまとめてコピーされます。LINEやメールに貼って送ってください。文面は直せます。</p>
+        <div class="callout info">
+          <b>入力画面は直接開けません</b>
+          発行したURLからしか入れない作りです。担当者と金額の取り違えを防ぐためなので、ブックマークからの直接起動はできません。
+        </div>
+      </li>
+      <li>
+        <h3>お客さまが入力する</h3>
+        <p>商品金額・頭金・回数・担当者は発行時のものが入っているので、お客さまが入れるのはここからです。</p>
         <ul>
           <li>お名前、セイ・メイ、生年月日、性別、電話番号</li>
           <li>郵便番号（7桁を入れると住所が自動で入ります）</li>
@@ -168,61 +182,25 @@ footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-he
       </li>
       <li>
         <h3>お客さまが送信する</h3>
-        <p>「送信が完了しました／この画面のまま、担当者にお渡しください」と表示されます。<b>審査結果はここでは出ません。</b></p>
-        <p>受付番号（例：<code>260917-001</code>）が出るので、控えておくと後から探しやすくなります。</p>
+        <p>「送信が完了しました」と受付番号（例：<code>261004-001</code>）が表示されます。<b>審査結果はお客さまには出ません。</b></p>
+        <p>同時に<b>Slackへ通知</b>が流れます。入力が終わったかどうかを、こちらから確認しにいく必要はありません。</p>
       </li>
       <li>
-        <h3>端末を返してもらい、結果を見る</h3>
+        <h3>結果を見る</h3>
+        <p><b>審査結果の確認</b>を開き、次の2つを入れて「審査結果を表示」を押します。</p>
         <ol>
-          <li>画面を下にスクロールして「<b>私は営業担当です</b>」を押す</li>
-          <li>パスコード <code>apra</code> を入力</li>
-          <li>「審査結果を表示」を押す</li>
+          <li>受付番号（Slack通知に載っています）</li>
+          <li>パスコード <code>apra</code></li>
         </ol>
         <div class="verdicts">
           <div class="vd ok"><b>手続き可</b><span>RMより締結許可の共有があるまでお待ちください</span></div>
           <div class="vd ng"><b>手続き不可</b><span>条件つき再審査が可能な場合があります</span></div>
           <div class="vd hold"><b>要確認</b><span>入力に不足があります。審査結果通知スレッドで共有してください</span></div>
         </div>
-        <p>画面には、このあと何をするかも表示されます。</p>
       </li>
       <li>
         <h3>次のお客さまへ</h3>
-        <ul>
-          <li><b>結果を隠す</b> … 元の完了画面に戻ります</li>
-          <li><b>次のお客さまの入力へ</b> … 最初の入力画面に戻ります</li>
-        </ul>
-      </li>
-    </ol>
-  </section>
-
-  <section>
-    <h2 id="remote">FSの使い方（遠隔）</h2>
-    <p>お客さまと離れているときは、入力用のURLを送ります。</p>
-    <ol class="steps">
-      <li>
-        <h3>URLを発行する</h3>
-        <p><b>入力URLの発行</b>を開き、担当者名・パスコード（<code>apra</code>）・商品金額・頭金・回数を入れて「URLを発行する」を押します。</p>
-        <p>お客さま名のメモも入れておくと、あとで探しやすくなります。</p>
-      </li>
-      <li>
-        <h3>お客さまに送る</h3>
-        <p>「文面ごとコピー」を押すと、案内文とURLがまとめてコピーされます。メールやLINEに貼って送ってください。文面は直せます。</p>
-        <div class="callout warn">
-          <b>URLの有効期限</b>
-          発行から72時間で使えなくなります。また、1回入力すると無効になります。切れてしまったら、もう一度発行してください。
-        </div>
-      </li>
-      <li>
-        <h3>お客さまが入力する</h3>
-        <p>商品の情報は入力済みで表示されるので、お客さまは個人情報と収入だけを入れます。</p>
-      </li>
-      <li>
-        <h3>Slackの通知を待つ</h3>
-        <p>お客さまが送信すると、Slackに「入力が完了しました」と受付番号が流れます。こちらから確認しにいく必要はありません。</p>
-      </li>
-      <li>
-        <h3>結果を見る</h3>
-        <p><b>審査結果の確認</b>を開き、受付番号とパスコードを入れると可否が出ます。あとは対面のときと同じです。</p>
+        <p><b>入力URLの発行</b>に戻って、もう一度URLを発行します。1つのURLは1人ぶんです。</p>
       </li>
     </ol>
   </section>
