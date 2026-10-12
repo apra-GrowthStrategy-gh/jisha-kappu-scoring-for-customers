@@ -298,6 +298,11 @@ h1{-webkit-user-select:none;user-select:none}
       <p class="hint" id="incHint"></p>
     </div>
     <div class="f">
+      <label for="payday">給料日<span class="req">必須</span></label>
+      <div class="ib"><select id="payday"></select></div>
+      <p class="hint">お給料が振り込まれる日です。土日祝のときは前後することがありますが、おおよそで結構です。</p>
+    </div>
+    <div class="f">
       <span class="lab" id="hl">世帯人数<small>（本人を含む）</small><span class="req">必須</span></span>
       <div class="seg" role="group" aria-labelledby="hl" id="hh">
         <button type="button" data-v="1">1人</button><button type="button" data-v="2">2人</button><button type="button" data-v="3">3人</button><button type="button" data-v="4">4人以上</button>
@@ -459,6 +464,14 @@ h1{-webkit-user-select:none;user-select:none}
   const today = new Date();
   $('birth').max = today.toISOString().slice(0, 10);
 
+  // 給料日の選択肢
+  const pd = $('payday');
+  pd.appendChild(new Option('選択してください', ''));
+  for (let i = 1; i <= 31; i++) pd.appendChild(new Option(`${i}日`, String(i)));
+  pd.appendChild(new Option('月末', '月末'));
+  pd.appendChild(new Option('決まっていない・その他', 'その他'));
+  pd.addEventListener('change', check);
+
   ['price', 'down', 'income'].forEach(id => liveComma($(id)));
   document.querySelectorAll('.plan').forEach(b => b.addEventListener('click', () => {
     $('price').value = Number(b.dataset.price).toLocaleString('ja-JP');
@@ -486,7 +499,17 @@ h1{-webkit-user-select:none;user-select:none}
 
   // ============ 発行URLから開いたとき ============
   async function loadCase() {
-    if (!CASE_KEY) return;
+    if (!CASE_KEY) {
+      // この画面は、担当者が発行したURLからのみ使えます
+      $('caseErr').innerHTML = '<b>このページは直接開けません</b>'
+        + '担当者が発行したお申し込み用のURLから、お進みください。'
+        + 'お手元にURLがない場合は、ご担当者へご連絡ください。';
+      $('caseErr').hidden = false;
+      $('lead').hidden = true;
+      $('form').querySelectorAll('section.card, .bar').forEach(el => { el.hidden = true; });
+      $('bar').hidden = true;
+      return;
+    }
     // 担当者が入れる欄は隠して、内容は読み取り専用で見せる
     $('staffCard').hidden = true;
     $('planFixed').hidden = false;
@@ -734,6 +757,7 @@ h1{-webkit-user-select:none;user-select:none}
     if (digits(v('zip')).length !== 7) missing.push('郵便番号');
     ['pref', 'city', 'addr1'].forEach(id => { if (!v(id)) missing.push('ご住所'); });
     if (!income) missing.push('税込年収');
+    if (!v('payday')) missing.push('給料日');
     if (!state.hh) missing.push('世帯人数');
     if (!state.hc) missing.push('お住まい');
     if (!state.idType) missing.push('身分証の選択');
@@ -773,7 +797,7 @@ h1{-webkit-user-select:none;user-select:none}
       tel: digits(v('tel')),
       zip: digits(v('zip')), pref: v('pref'), city: v('city'), address1: v('addr1'), address2: v('addr2'),
       price: parse(v('price')), down: parse(v('down')) || 0, times: Number(sel.value),
-      income: parse(v('income')), household: state.hh, housing: state.hc,
+      income: parse(v('income')), payday: v('payday'), household: state.hh, housing: state.hc,
       id_type: state.idType, emg_type: state.emgType, emg_rel: state.emgType === 'ご親族' ? v('emgRel') : '',
       legal_status: state.legal, legal_done: state.legal === 'done' ? v('legalDone') : '',
       debts: state.debts.map(d => ({ type: d.type, monthly: Number(d.monthly) || 0, months: Number(d.months) || 0 })),
