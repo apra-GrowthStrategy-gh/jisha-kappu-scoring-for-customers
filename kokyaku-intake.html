@@ -301,9 +301,9 @@ h1{-webkit-user-select:none;user-select:none}
 
   <section class="card">
     <h2>お電話のご希望日時</h2>
-    <p class="note">ご担当者からお電話を差し上げます。つながりやすい曜日と時刻を、第3希望までお選びください。</p>
+    <p class="note">ご担当者からお電話を差し上げます。つながりやすい曜日と時刻を、第3希望まですべてお選びください。</p>
     <div class="callrows" id="callrows"></div>
-    <p class="hint">第2・第3希望は任意です。入れていただけると、ご連絡までの時間が短くなります。</p>
+    <p class="hint">ご都合に幅をもたせていただくと、ご連絡までの時間が短くなります。</p>
   </section>
 
   <section class="card">
@@ -482,10 +482,10 @@ h1{-webkit-user-select:none;user-select:none}
 
   // お電話のご希望日時（曜日＋時刻を3セット）
   const DAYS = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日'];
-  // 10:00〜21:00 を1時間刻みで
+  // 10:00〜19:00 を1時間刻みで
   const SLOTS = [];
-  for (let h = 10; h <= 21; h++) SLOTS.push(('0' + h).slice(-2) + ':00');
-  const RANKS = [['call1', '第1希望', true], ['call2', '第2希望', false], ['call3', '第3希望', false]];
+  for (let h = 10; h <= 19; h++) SLOTS.push(('0' + h).slice(-2) + ':00');
+  const RANKS = [['call1', '第1希望', true], ['call2', '第2希望', true], ['call3', '第3希望', true]];
   RANKS.forEach(([id, label, req]) => {
     const row = document.createElement('div');
     row.className = 'callrow';
@@ -801,10 +801,8 @@ h1{-webkit-user-select:none;user-select:none}
     ['pref', 'city', 'addr1'].forEach(id => { if (!v(id)) missing.push('ご住所'); });
     if (!income) missing.push('税込年収');
     if (!v('payday')) missing.push('給料日');
-    if (!callPref('call1')) missing.push('お電話のご希望日時（第1希望）');
-    RANKS.slice(1).forEach(([id, label]) => {
-      const d = callVal(id, 'd'), t = callVal(id, 't');
-      if ((d && !t) || (!d && t)) missing.push(label + 'の曜日と時刻');
+    RANKS.forEach(([id, label]) => {
+      if (!callPref(id)) missing.push('お電話のご希望日時（' + label + '）');
     });
     if (!state.hh) missing.push('世帯人数');
     if (!state.hc) missing.push('お住まい');
