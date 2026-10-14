@@ -62,6 +62,15 @@ button,select,input{font:inherit}
 .seg button:last-child{border-right:none}
 .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
 .seg.col{flex-direction:column}
+.callrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--rule)}
+.callrow:last-child{border-bottom:none}
+.callrow .rank{flex:none;width:74px;font-size:13px;font-weight:700;color:var(--ink)}
+.callrow .ib{flex:1;min-width:0}
+@media (max-width:420px){
+  .callrow{flex-wrap:wrap}
+  .callrow .rank{width:100%}
+  .callrow .ib{flex:1 1 calc(50% - 5px)}
+}
 .seg.col button{border-right:none;border-bottom:1px solid var(--rule);text-align:left;padding:13px 14px}
 .seg.col button:last-child{border-bottom:none}
 #emgRelWrap{margin-top:10px}
@@ -291,6 +300,13 @@ h1{-webkit-user-select:none;user-select:none}
   </section>
 
   <section class="card">
+    <h2>お電話のご希望日時</h2>
+    <p class="note">ご担当者からお電話を差し上げます。つながりやすい曜日と時間帯を、第3希望までお選びください。</p>
+    <div class="callrows" id="callrows"></div>
+    <p class="hint">第2・第3希望は任意です。入れていただけると、ご連絡までの時間が短くなります。</p>
+  </section>
+
+  <section class="card">
     <h2>お仕事とご家族</h2>
     <div class="f">
       <label for="income">税込年収<span class="req">必須</span><small>（源泉徴収票・給与明細の金額）</small></label>
@@ -463,6 +479,31 @@ h1{-webkit-user-select:none;user-select:none}
   // 生年月日の上限（今日）
   const today = new Date();
   $('birth').max = today.toISOString().slice(0, 10);
+
+  // お電話のご希望日時（曜日＋時間帯を3セット）
+  const DAYS = ['月曜', '火曜', '水曜', '木曜', '金曜', '土曜', '日曜', 'いつでも'];
+  const SLOTS = ['9時〜12時', '12時〜15時', '15時〜19時', '19時以降'];
+  const RANKS = [['call1', '第1希望', true], ['call2', '第2希望', false], ['call3', '第3希望', false]];
+  RANKS.forEach(([id, label, req]) => {
+    const row = document.createElement('div');
+    row.className = 'callrow';
+    row.innerHTML = `<span class="rank">${label}${req ? '<span class="req">必須</span>' : ''}</span>`
+      + `<div class="ib"><select id="${id}d" aria-label="${label}の曜日"></select></div>`
+      + `<div class="ib"><select id="${id}t" aria-label="${label}の時間帯"></select></div>`;
+    $('callrows').appendChild(row);
+    const d = row.querySelector(`#${id}d`), t = row.querySelector(`#${id}t`);
+    d.appendChild(new Option('曜日', ''));
+    DAYS.forEach(x => d.appendChild(new Option(x, x)));
+    t.appendChild(new Option('時間帯', ''));
+    SLOTS.forEach(x => t.appendChild(new Option(x, x)));
+    d.addEventListener('change', check);
+    t.addEventListener('change', check);
+  });
+  const callVal = (id, k) => ($(id + k).value || '').trim();
+  const callPref = id => {
+    const d = callVal(id, 'd'), t = callVal(id, 't');
+    return (d && t) ? d + '・' + t : '';
+  };
 
   // 給料日の選択肢
   const pd = $('payday');
@@ -758,6 +799,11 @@ h1{-webkit-user-select:none;user-select:none}
     ['pref', 'city', 'addr1'].forEach(id => { if (!v(id)) missing.push('ご住所'); });
     if (!income) missing.push('税込年収');
     if (!v('payday')) missing.push('給料日');
+    if (!callPref('call1')) missing.push('お電話のご希望日時（第1希望）');
+    RANKS.slice(1).forEach(([id, label]) => {
+      const d = callVal(id, 'd'), t = callVal(id, 't');
+      if ((d && !t) || (!d && t)) missing.push(label + 'の曜日と時間帯');
+    });
     if (!state.hh) missing.push('世帯人数');
     if (!state.hc) missing.push('お住まい');
     if (!state.idType) missing.push('身分証の選択');
@@ -797,6 +843,7 @@ h1{-webkit-user-select:none;user-select:none}
       tel: digits(v('tel')),
       zip: digits(v('zip')), pref: v('pref'), city: v('city'), address1: v('addr1'), address2: v('addr2'),
       price: parse(v('price')), down: parse(v('down')) || 0, times: Number(sel.value),
+      call1: callPref('call1'), call2: callPref('call2'), call3: callPref('call3'),
       income: parse(v('income')), payday: v('payday'), household: state.hh, housing: state.hc,
       id_type: state.idType, emg_type: state.emgType, emg_rel: state.emgType === 'ご親族' ? v('emgRel') : '',
       legal_status: state.legal, legal_done: state.legal === 'done' ? v('legalDone') : '',
