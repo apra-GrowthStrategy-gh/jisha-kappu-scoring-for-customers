@@ -3,997 +3,279 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>自社割賦 お申し込み内容の確認</title>
+<title>自社割賦スコアリング 使い方ガイド（FS用）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#EEF0F4; --paper:#FFF; --ink:#16213A; --ink-2:#3C4659; --sub:#6B7484;
-  --rule:#D7DCE4; --rule-soft:#EAEDF2; --focus:#2B4C8C; --ng:#C23A1E; --ng-bg:#FBEDEA;
-  --ok:#1D7050; --ok-bg:#E7F3EC; --warn:#9A6212; --warn-bg:#FBF2E1; --r:8px;
+  --rule:#D7DCE4; --rule-soft:#EAEDF2; --focus:#2B4C8C;
+  --ng:#C23A1E; --ng-bg:#FBEDEA; --ok:#1D7050; --ok-bg:#E7F3EC;
+  --warn:#9A6212; --warn-bg:#FBF2E1; --r:8px;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);
   font-family:"BIZ UDPGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;
-  font-size:16px;line-height:1.6;font-variant-numeric:tabular-nums;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
-.wrap{max-width:560px;margin:0 auto;padding:18px 16px 24px}
-h1{font-size:19px;margin:0 0 2px}
-.lead{font-size:13px;color:var(--sub);margin:0 0 14px}
+  font-size:15px;line-height:1.75;font-variant-numeric:tabular-nums}
+.wrap{max-width:760px;margin:0 auto;padding:28px 18px 60px}
 button,select,input{font:inherit}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.card{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
-.card h2{font-size:14px;margin:0 0 4px;color:var(--ink-2)}
-.card .note{font-size:12px;color:var(--sub);margin:0 0 10px;line-height:1.5}
-.staff{border-color:var(--ink-2);background:#F7F8FA}
-.staff h2::before{content:"担当者記入";font-size:11px;background:var(--ink);color:#fff;border-radius:3px;padding:1px 7px;margin-right:8px;vertical-align:1px}
 
-.f{padding:7px 0}
-.f>label,.f .lab{display:block;font-size:13px;color:var(--ink-2);margin-bottom:4px}
-.f .lab small,.f>label small{color:var(--sub);font-size:11px;font-weight:400}
-.req{color:var(--ng);font-size:11px;margin-left:5px}
-.ib{display:flex;align-items:center;border:1px solid var(--rule);border-radius:6px;background:#FAFBFC;padding:0 12px}
-.ib:focus-within{border-color:var(--focus);background:#fff}
-.ib input{flex:1;min-width:0;width:100%;border:none;background:transparent;padding:11px 0;font-size:17px;color:var(--ink)}
-.ib input:focus-visible{outline:none}
-.ib.num input{text-align:right;font-size:19px}
-.ib i{font-style:normal;font-size:13px;color:var(--sub);margin-left:8px}
-.ib.bad,.sel.bad{border-color:var(--ng);background:var(--ng-bg)}
-.sel{width:100%;padding:11px;border:1px solid var(--rule);border-radius:6px;background:#FAFBFC;color:var(--ink)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.combo{position:relative}
-.combo .ib{padding-right:4px}
-.caret{border:none;background:none;color:var(--sub);font-size:14px;padding:6px 8px;cursor:pointer}
-.clist{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;margin:0;padding:4px;list-style:none;
-  background:#fff;border:1px solid var(--rule);border-radius:6px;box-shadow:0 8px 24px rgba(22,33,58,.12);
-  max-height:260px;overflow:auto}
-.clist li{padding:10px 12px;border-radius:4px;cursor:pointer;font-size:15px;line-height:1.4}
-.clist li small{display:block;font-size:12px;color:var(--sub)}
-.clist li[aria-selected="true"],.clist li:hover{background:#EEF2F9}
-.clist li.none{color:var(--sub);cursor:default;font-size:13px}
-.clist li.none:hover{background:none}
-.ziprow{display:flex;gap:8px;align-items:center}
-.zipbtn{flex:none;padding:10px 14px;border:1px solid var(--rule);border-radius:6px;background:#FAFBFC;color:var(--ink-2);font-size:13px;cursor:pointer}
-.zipbtn:hover{border-color:var(--ink-2);color:var(--ink)}
-.zipbtn:disabled{opacity:.5;cursor:not-allowed}
-.seg{display:flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:#FAFBFC}
-.seg button{flex:1;border:none;border-right:1px solid var(--rule);background:transparent;color:var(--ink-2);padding:11px 4px;font-size:14px;cursor:pointer}
-.seg button:last-child{border-right:none}
-.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
-.seg.col{flex-direction:column}
-.callrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--rule)}
-.callrow:last-child{border-bottom:none}
-.callrow .rank{flex:none;width:74px;font-size:13px;font-weight:700;color:var(--ink)}
-.callrow .ib{flex:1;min-width:0}
-@media (max-width:420px){
-  .callrow{flex-wrap:wrap}
-  .callrow .rank{width:100%}
-  .callrow .ib{flex:1 1 calc(50% - 5px)}
+header{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:18px}
+h1{font-size:24px;margin:0}
+.lead{font-size:13px;color:var(--sub);margin:4px 0 0}
+
+/* 表示切替 */
+
+/* 目次 */
+.toc{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:14px 18px;margin-bottom:18px}
+.toc b{font-size:13px;color:var(--ink-2)}
+.toc ol{margin:6px 0 0;padding-left:1.3em;font-size:14px;columns:2;column-gap:24px}
+@media (max-width:560px){.toc ol{columns:1}}
+.toc a{color:var(--focus);text-decoration:none}
+.toc a:hover{text-decoration:underline}
+
+section{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:20px 22px;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--rule-soft);scroll-margin-top:12px}
+h3{font-size:15px;margin:18px 0 6px}
+h3:first-of-type{margin-top:6px}
+p{margin:0 0 10px}
+ul,ol{margin:0 0 10px;padding-left:1.4em}
+li{margin:0 0 5px}
+section a{color:var(--focus)}
+code{background:#F1F3F7;border-radius:4px;padding:1px 6px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px}
+
+table{width:100%;border-collapse:collapse;font-size:14px;margin:0 0 10px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--rule-soft);text-align:left;vertical-align:top}
+thead th{background:#F6F7F9;color:var(--ink-2);font-size:13px;border-bottom:1px solid var(--ink-2)}
+td code{word-break:break-all}
+
+.url{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;
+  background:#F6F7F9;border-radius:4px;padding:7px 9px;word-break:break-all;margin-bottom:6px}
+a.url{color:var(--focus);text-decoration:none;border:1px solid var(--rule-soft);transition:background .15s,border-color .15s}
+a.url:hover{background:#EEF2F9;border-color:var(--focus);text-decoration:underline}
+a.url::after{content:"↗";margin-left:6px;font-size:11px;color:var(--sub);text-decoration:none}
+.copy{border:1px solid var(--rule);background:#fff;border-radius:5px;padding:4px 10px;font-size:12px;color:var(--ink-2);cursor:pointer}
+.copy:hover{border-color:var(--ink-2);color:var(--ink)}
+.copy.done{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+
+.pass{display:flex;align-items:center;gap:12px;background:var(--warn-bg);border-radius:6px;padding:12px 14px;margin:10px 0 0;flex-wrap:wrap}
+.pass b{font-size:22px;letter-spacing:.1em;color:var(--warn)}
+.pass span{font-size:13px;color:var(--warn)}
+
+.steps{list-style:none;counter-reset:s;margin:0;padding:0}
+.steps>li{counter-increment:s;position:relative;padding:0 0 16px 40px;border-left:2px solid var(--rule-soft);margin-left:13px}
+.steps>li:last-child{border-left-color:transparent;padding-bottom:0}
+.steps>li::before{content:counter(s);position:absolute;left:-15px;top:0;width:28px;height:28px;border-radius:50%;
+  background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700}
+.steps h3{margin:2px 0 6px}
+
+.verdicts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+@media (max-width:560px){.verdicts{grid-template-columns:1fr}}
+.vd{border-radius:6px;padding:12px;border:1px solid}
+.vd b{display:block;font-size:16px;margin-bottom:3px}
+.vd span{font-size:13px;line-height:1.55;display:block}
+.vd.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+.vd.ng{border-color:var(--ng);background:var(--ng-bg);color:var(--ng)}
+.vd.hold{border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+
+.callout{border-left:3px solid var(--ng);background:var(--ng-bg);border-radius:0 6px 6px 0;padding:11px 14px;margin:10px 0;font-size:14px}
+.callout.warn{border-color:var(--warn);background:var(--warn-bg)}
+.callout.info{border-color:var(--ink-2);background:#F6F7F9}
+.callout b{display:block;margin-bottom:2px}
+
+.badge{display:inline-block;font-size:11px;background:var(--ink);color:#fff;border-radius:3px;padding:1px 8px;margin-left:8px;vertical-align:3px;font-weight:400}
+.formula{background:#F4F6F9;border-left:3px solid var(--ink);padding:12px 14px;margin:8px 0;font-size:15px;line-height:1.7}
+.formula b{font-size:16px}
+.ex{font-size:13px;color:var(--ink-2);background:#F6F7F9;border-radius:6px;padding:10px 12px;margin:6px 0 0}
+.ex code{background:#fff}
+footer{font-size:12px;color:var(--sub);text-align:center;margin-top:24px;line-height:1.7}
+
+@media print{
+  body{background:#fff}
+  .toc,.copy{display:none}
+  section{border:none;padding:0;margin-bottom:18px;break-inside:avoid}
+  h2{break-after:avoid}
+  a.url{color:var(--ink)}
+  a.url::after{content:""}
 }
-.seg.col button{border-right:none;border-bottom:1px solid var(--rule);text-align:left;padding:13px 14px}
-.seg.col button:last-child{border-bottom:none}
-#emgRelWrap{margin-top:10px}
-.plans{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.plan{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--rule);background:#fff;color:var(--ink-2);cursor:pointer}
-.plan[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-.err{font-size:12px;color:var(--ng);margin:4px 0 0;display:none}
-.err.on{display:block}
-.hint{font-size:12px;color:var(--sub);margin:4px 0 0}
-.caution{font-size:12px;line-height:1.55;color:var(--warn);background:var(--warn-bg);border-radius:6px;padding:8px 10px;margin:0 0 10px}
-
-.debts{display:flex;flex-direction:column;gap:8px}
-.debt{border:1px solid var(--rule);border-radius:6px;padding:10px 12px;background:#FCFCFD}
-.debt .head{display:flex;gap:8px;align-items:center}
-.debt .head select{flex:1;min-width:0;font-size:14px;padding:8px}
-.debt .del{border:none;background:none;color:var(--sub);font-size:12px;text-decoration:underline;cursor:pointer;padding:6px 4px}
-.debt .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.debt .row2 label{display:block;font-size:11px;color:var(--sub)}
-.debt .row2 .ib{padding:0 8px}
-.debt .row2 .ib input{font-size:16px;padding:7px 0;text-align:right}
-.empty{padding:12px;border:1px solid var(--rule-soft);border-radius:6px;background:#FAFBFC;color:var(--sub);font-size:14px;text-align:center}
-.add{width:100%;margin-top:8px;padding:11px;border:1px dashed var(--ink-2);border-radius:6px;background:transparent;color:var(--ink);font-size:15px;cursor:pointer}
-
-.agree{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-2);line-height:1.55;
-  padding:10px 0;border-bottom:1px solid var(--rule-soft)}
-.agree:last-of-type{border-bottom:none}
-.agree b{display:block;color:var(--ink);font-size:13.5px}
-.agree input{width:20px;height:20px;margin:2px 0 0;flex:none}
-
-.tbar{position:fixed;left:0;right:0;top:0;z-index:50;background:repeating-linear-gradient(135deg,#B7791F,#B7791F 14px,#9A6212 14px,#9A6212 28px);
-  color:#fff;font-size:13px;font-weight:700;text-align:center;padding:9px 12px;letter-spacing:.03em;
-  box-shadow:0 2px 10px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;gap:10px}
-.tbar .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1.4s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
-@media (prefers-reduced-motion:reduce){.tbar .dot{animation:none}}
-body.testing{padding-top:38px}
-body.testing::after{content:"";position:fixed;inset:0;border:4px solid var(--warn);pointer-events:none;z-index:45}
-body.testing .wrap{position:relative}
-body.testing .staff{border-color:var(--warn);background:var(--warn-bg);border-width:2px}
-.caseerr{background:var(--ng-bg);border:1px solid var(--ng);color:var(--ng);border-radius:var(--r);
-  padding:16px 18px;margin-bottom:14px;font-size:14px;line-height:1.7}
-.caseerr b{display:block;font-size:16px;margin-bottom:4px}
-.fixed{display:grid;grid-template-columns:auto 1fr;gap:0;margin:0;font-size:15px}
-.fixed dt{color:var(--sub);font-size:13px;padding:8px 0;border-bottom:1px solid var(--rule-soft)}
-.fixed dd{margin:0;text-align:right;padding:8px 0;border-bottom:1px solid var(--rule-soft);font-weight:700}
-.fixed dt:last-of-type,.fixed dd:last-of-type{border-bottom:none}
-.tbadge{display:inline-block;font-size:10px;letter-spacing:.06em;background:var(--warn);color:#fff;border-radius:3px;padding:1px 6px;margin-left:8px;vertical-align:2px}
-.tpass{display:flex;gap:8px;align-items:center;margin:0 0 14px;flex-wrap:wrap}
-.tpass[hidden]{display:none}
-.tpass .ib{flex:1;min-width:130px}
-.tpass .ib input{font-size:15px;padding:9px 0;text-align:left}
-.tbtn{border:1px solid var(--rule);background:#FAFBFC;border-radius:6px;padding:9px 14px;font-size:13px;color:var(--ink-2);cursor:pointer}
-.tbtn:hover{border-color:var(--ink-2);color:var(--ink)}
-h1{-webkit-user-select:none;user-select:none}
-[hidden]{display:none !important}
-.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(238,240,244,.96);backdrop-filter:blur(6px);
-  border-top:1px solid var(--rule);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
-.bar .inner{max-width:560px;margin:0 auto}
-.submit{width:100%;padding:15px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-size:17px;font-weight:700;cursor:pointer}
-.submit:disabled{background:#AAB2C0;cursor:not-allowed}
-.barmsg{font-size:12px;color:var(--sub);text-align:center;margin:0 0 8px}
-.barmsg.bad{color:var(--ng)}
-
-/* 完了画面 */
-.done{display:none;text-align:center;padding:40px 20px}
-.done.on{display:block}
-.done .mk{width:72px;height:72px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:grid;place-items:center;font-size:36px;margin:0 auto 16px}
-.done h2{font-size:21px;margin:0 0 6px}
-.done p{font-size:14px;color:var(--ink-2);margin:0 0 4px}
-.done .id{margin:20px auto 0;max-width:320px;background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:14px}
-.done .id span{display:block;font-size:12px;color:var(--sub)}
-.done .id b{font-size:24px;letter-spacing:.06em}
-.demo{max-width:340px;margin:12px auto 0;font-size:12px;line-height:1.5;color:var(--warn);background:var(--warn-bg);border-radius:6px;padding:8px 10px}
-.donetest{max-width:340px;margin:12px auto 0;font-size:13px;font-weight:700;color:#fff;background:var(--warn);border-radius:6px;padding:9px 12px}
-.done .back{margin-top:22px;font-size:13px;color:var(--sub)}
-.staffarea{max-width:340px;margin:34px auto 0;padding-top:20px;border-top:1px solid var(--rule)}
-.staffbtn{width:100%;padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--sub);font-size:13px;cursor:pointer}
-.staffbtn:hover{color:var(--ink);border-color:var(--ink-2)}
-.passbox{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:16px;text-align:left}
-.passbox label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:4px}
-.passgo{width:100%;margin-top:10px;padding:13px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
-.passgo:disabled{background:#AAB2C0;cursor:not-allowed}
-.passmsg{font-size:12px;color:var(--ng);margin:8px 0 0;min-height:1.4em;text-align:center}
-.linkbtn{display:block;width:100%;margin-top:10px;padding:8px;border:none;background:none;color:var(--sub);font-size:13px;text-decoration:underline;cursor:pointer}
-.judge{border-radius:var(--r);border:2px solid var(--rule);background:var(--paper);padding:22px 16px 12px}
-.judge[data-s="ok"]{border-color:var(--ok);background:var(--ok-bg)}
-.judge[data-s="ng"]{border-color:var(--ng);background:var(--ng-bg)}
-.judge[data-s="hold"]{border-color:var(--warn);background:var(--warn-bg)}
-.jmk{font-size:46px;font-weight:700;line-height:1}
-.judge[data-s="ok"] .jmk{color:var(--ok)} .judge[data-s="ng"] .jmk{color:var(--ng)} .judge[data-s="hold"] .jmk{color:var(--warn)}
-.jv{font-size:23px;font-weight:700;margin:6px 0 0}
-.jwho{font-size:13px;color:var(--ink-2);margin:6px 0 0}
-.jsteps{text-align:left;font-size:13px;color:var(--ink-2);margin:14px 0 0;padding-left:1.3em}
-.jsteps li{margin:0 0 5px}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="tbar" id="tbar" hidden>
-  <span class="dot"></span>テストモード中 ― この送信は集計に入りません<span class="dot"></span>
-</div>
+  <header>
+    <h1>自社割賦スコアリング 使い方ガイド</h1>
+    <p class="lead">FS用 ／ お客さまに入力してもらい、その場で審査結果を確認するための仕組みです。</p>
+  </header>
 
-<div class="wrap" id="form">
-  <h1>お申し込み内容の確認</h1>
-  <p class="lead" id="lead">お支払いプランのご案内にあたり、以下をご入力ください。入力いただいた内容は、お手続きの確認以外には使用しません。</p>
+  <nav class="toc">
+    <b>目次</b>
+    <ol id="toc"></ol>
+  </nav>
 
-  <div class="tpass" id="tpass" hidden>
-    <div class="ib"><input id="tpassInput" type="password" placeholder="パスコード" autocomplete="off"></div>
-    <button type="button" class="tbtn" id="tpassGo">確定</button>
-    <button type="button" class="tbtn" id="tpassCancel">閉じる</button>
-  </div>
-
-  <div class="caseerr" id="caseErr" hidden></div>
-
-  <section class="card staff" id="staffCard">
-    <h2>ご案内中のプラン<span class="tbadge" id="tbadge" hidden>TEST</span></h2>
-    <div class="f">
-      <label for="price">商品金額<span class="req">必須</span></label>
-      <div class="ib num"><input id="price" inputmode="numeric" autocomplete="off"><i>円</i></div>
-      <div class="plans" role="group" aria-label="プラン">
-        <button type="button" class="plan" data-price="902000">MP / VP</button>
-        <button type="button" class="plan" data-price="792000">MPA / VPA</button>
-        <button type="button" class="plan" data-price="492800">MPC / VPC</button>
-      </div>
-    </div>
-    <div class="two">
-      <div class="f">
-        <label for="down">頭金</label>
-        <div class="ib num"><input id="down" inputmode="numeric" autocomplete="off"><i>円</i></div>
-      </div>
-      <div class="f">
-        <label for="times">支払回数</label>
-        <select class="sel" id="times"></select>
-      </div>
-    </div>
-    <div class="f">
-      <label for="staffName">担当者名<span class="req">必須</span></label>
-      <div class="combo" id="combo">
-        <div class="ib"><input id="staffName" autocomplete="off" placeholder="名前を入力または選択"
-          role="combobox" aria-expanded="false" aria-controls="staffList" aria-autocomplete="list">
-          <button type="button" class="caret" id="caret" aria-label="一覧を開く">▾</button></div>
-        <ul class="clist" id="staffList" role="listbox" hidden></ul>
-      </div>
-      <p class="hint" id="staffHint">読み込み中です…</p>
-    </div>
+  <section>
+    <h2 id="url">URLとパスコード</h2>
+    <table>
+      <thead><tr><th>用途</th><th>開く人</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>お客さま入力</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/kokyaku-intake.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/kokyaku-intake.html</a><button type="button" class="copy">コピー</button></td>
+          <td>発行したURLから<br>お客さまが開く</td>
+        </tr>
+        <tr>
+          <td><b>入力URLの発行</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/anken-hakko.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/anken-hakko.html</a><button type="button" class="copy">コピー</button></td>
+          <td><b>FSが最初に開く</b></td>
+        </tr>
+        <tr>
+          <td><b>審査結果の確認</b><a class="url" href="https://jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html" target="_blank" rel="noopener">jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html</a><button type="button" class="copy">コピー</button></td>
+          <td>FS<br>（あとから見るとき）</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pass"><span>審査結果を表示するパスコード</span><b>apra</b><span>お客さまには教えないでください</span></div>
+    <p style="margin-top:10px"><b>入力URLの発行</b>を、スマホやタブレットにブックマークしておくと毎回探さずに済みます。お客さま入力のURLは発行のたびに変わるので、ブックマークしても使えません。</p>
   </section>
 
-  <section class="card plan-fixed" id="planFixed" hidden>
-    <h2>ご案内中のプラン<span class="tbadge" id="tbadge2" hidden>TEST</span></h2>
-    <dl class="fixed">
-      <dt>商品金額</dt><dd id="fxPrice">―</dd>
-      <dt>頭金</dt><dd id="fxDown">―</dd>
-      <dt>お支払い回数</dt><dd id="fxTimes">―</dd>
-      <dt>担当者</dt><dd id="fxStaff">―</dd>
-    </dl>
+  <section>
+    <h2 id="flow">FSの使い方</h2>
+    <p>流れは1本です。<b>まず入力URLを発行し、お客さまに送って開いてもらいます。</b>入力はお客さまご自身の端末で行っていただきます。</p>
+    <ol class="steps">
+      <li>
+        <h3>入力URLを発行する</h3>
+        <p><b>入力URLの発行</b>を開き、次を入れて「URLを発行する」を押します。</p>
+        <ul>
+          <li>担当者名（名前を打つと候補が出ます。一覧にない名前は選べません）</li>
+          <li>パスコード <code>apra</code></li>
+          <li>商品金額（MP/VP などのボタンを押すと自動で入ります）</li>
+          <li>頭金（なければ 0 のまま）／支払回数（通常は 60回）</li>
+          <li>お客さま名のメモ（任意。あとで探しやすくなります）</li>
+        </ul>
+        <div class="callout warn">
+          <b>URLの有効期限</b>
+          発行から72時間で使えなくなります。また、1回入力すると無効になります。切れてしまったら、もう一度発行してください。
+        </div>
+      </li>
+      <li>
+        <h3>お客さまに開いてもらう</h3>
+        <p>「<b>文面ごとコピー</b>」を押すと、案内文とURLがまとめてコピーされます。LINEやメールに貼って送ってください。文面は直せます。</p>
+        <div class="callout info">
+          <b>入力画面は直接開けません</b>
+          発行したURLからしか入れない作りです。担当者と金額の取り違えを防ぐためなので、ブックマークからの直接起動はできません。
+        </div>
+      </li>
+      <li>
+        <h3>お客さまが入力する</h3>
+        <p>商品金額・頭金・回数・担当者は発行時のものが入っているので、お客さまが入れるのはここからです。</p>
+        <ul>
+          <li>お名前、セイ・メイ、生年月日、性別、電話番号</li>
+          <li>郵便番号（7桁を入れると住所が自動で入ります）</li>
+          <li>お電話のご希望日時（曜日＋時刻／第3希望まですべて必須）</li>
+          <li>税込年収、給料日、世帯人数（本人を含む）、お住まい</li>
+          <li>ご提出いただくもの（身分証の種類／緊急連絡先の区分）<br><small>この画面では<b>どれを出すか選ぶだけ</b>です。中身は相談センターのLINEで確認します</small></li>
+          <li>債務整理・自己破産の状況（なし／手続き中・支払い中／完済・手続き完了＋その時期）</li>
+          <li>他社からのお借入（なければ触らなくてOK）</li>
+          <li>確認事項3つのチェック</li>
+        </ul>
+        <p>未入力があると画面下に「未入力：◯◯」と出て送信できません。すべて埋まると送信ボタンが押せるようになります。</p>
+      </li>
+      <li>
+        <h3>お客さまが送信する</h3>
+        <p>「送信が完了しました」と受付番号（例：<code>261004-001</code>）が表示されます。<b>審査結果はお客さまには出ません。</b></p>
+        <p>同時に<b>Slackへ通知</b>が流れます。入力が終わったかどうかを、こちらから確認しにいく必要はありません。</p>
+      </li>
+      <li>
+        <h3>結果を見る</h3>
+        <p><b>審査結果の確認</b>を開き、次の2つを入れて「審査結果を表示」を押します。</p>
+        <ol>
+          <li>受付番号（Slack通知に載っています）</li>
+          <li>パスコード <code>apra</code></li>
+        </ol>
+        <div class="verdicts">
+          <div class="vd ok"><b>手続き可</b><span>RMより締結許可の共有があるまでお待ちください</span></div>
+          <div class="vd ng"><b>手続き不可</b><span>条件つき再審査が可能な場合があります</span></div>
+          <div class="vd hold"><b>要確認</b><span>入力に不足があります。審査結果通知スレッドで共有してください</span></div>
+        </div>
+      </li>
+      <li>
+        <h3>次のお客さまへ</h3>
+        <p><b>入力URLの発行</b>に戻って、もう一度URLを発行します。1つのURLは1人ぶんです。</p>
+      </li>
+    </ol>
   </section>
 
-  <section class="card">
-    <h2>お客さま情報</h2>
-    <p class="note">本人確認書類のとおりにご入力ください。</p>
-    <div class="two">
-      <div class="f">
-        <label for="lastName">姓<span class="req">必須</span></label>
-        <div class="ib"><input id="lastName" autocomplete="family-name" placeholder="山田"></div>
-      </div>
-      <div class="f">
-        <label for="firstName">名<span class="req">必須</span></label>
-        <div class="ib"><input id="firstName" autocomplete="given-name" placeholder="太郎"></div>
-      </div>
-      <div class="f">
-        <label for="lastKana">セイ<span class="req">必須</span></label>
-        <div class="ib"><input id="lastKana" placeholder="ヤマダ"></div>
-      </div>
-      <div class="f">
-        <label for="firstKana">メイ<span class="req">必須</span></label>
-        <div class="ib"><input id="firstKana" placeholder="タロウ"></div>
-      </div>
-    </div>
-    <div class="f">
-      <label for="birth">生年月日<span class="req">必須</span></label>
-      <input type="date" class="sel" id="birth" max="">
-      <p class="hint" id="ageHint"></p>
-      <p class="err" id="birthErr"></p>
-    </div>
-    <div class="f">
-      <span class="lab" id="sexLab">性別<span class="req">必須</span></span>
-      <div class="seg" role="group" aria-labelledby="sexLab" id="sex">
-        <button type="button" data-v="male">男性</button><button type="button" data-v="female">女性</button><button type="button" data-v="na">回答しない</button>
-      </div>
-    </div>
-    <div class="f">
-      <label for="tel">電話番号<span class="req">必須</span><small>（携帯電話・ハイフンなし）</small></label>
-      <div class="ib"><input id="tel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="09012345678"></div>
-      <p class="err" id="telErr">携帯電話の番号を、ハイフンなしで入力してください</p>
-    </div>
+  <section>
+    <h2 id="ng">否決だったときの動き</h2>
+    <ul>
+      <li>条件つき再審査可能な場合があります</li>
+      <li>再審査を希望する場合は該当する審査結果通知スレッドで共有してください</li>
+    </ul>
   </section>
 
-  <section class="card">
-    <h2>ご住所</h2>
-    <p class="note">本人確認書類に記載の住所をご入力ください。</p>
-    <div class="f">
-      <label for="zip">郵便番号<span class="req">必須</span></label>
-      <div class="ziprow">
-        <div class="ib" style="max-width:190px"><input id="zip" inputmode="numeric" autocomplete="postal-code" placeholder="1000001"></div>
-        <button type="button" class="zipbtn" id="zipBtn">住所を検索</button>
-      </div>
-      <p class="hint" id="zipHint">7桁を入れると住所が自動で入ります</p>
-    </div>
-    <div class="two">
-      <div class="f">
-        <label for="pref">都道府県<span class="req">必須</span></label>
-        <div class="ib"><input id="pref" autocomplete="address-level1"></div>
-      </div>
-      <div class="f">
-        <label for="city">市区町村<span class="req">必須</span></label>
-        <div class="ib"><input id="city" autocomplete="address-level2"></div>
-      </div>
-    </div>
-    <div class="f">
-      <label for="addr1">町名・番地<span class="req">必須</span></label>
-      <div class="ib"><input id="addr1" autocomplete="address-line1" placeholder="千代田1-1-1"></div>
-    </div>
-    <div class="f">
-      <label for="addr2">建物名・部屋番号</label>
-      <div class="ib"><input id="addr2" autocomplete="address-line2" placeholder="○○マンション101"></div>
-    </div>
+  <section>
+    <h2 id="other">審査のほかに確認すること</h2>
+    <p>この仕組みが見ているのは<b>支払い能力だけ</b>です。次の項目は別途確認が必要で、1つでも当てはまれば契約できません。</p>
+    <ul>
+      <li>身分証と現住所が一致しているか</li>
+      <li>本人名義の携帯電話か</li>
+      <li>債務整理・自己破産の手続き中、または支払い中でないか</li>
+      <li>就業しているか</li>
+      <li>反社会的勢力との関係、威圧的な言動がないか</li>
+      <li>他社借入が3社以上でないか</li>
+    </ul>
   </section>
 
-  <section class="card">
-    <h2>お電話のご希望日時</h2>
-    <p class="note">ご担当者からお電話を差し上げます。つながりやすい曜日と時刻を、第3希望まですべてお選びください。</p>
-    <div class="callrows" id="callrows"></div>
-    <p class="hint">ご都合に幅をもたせていただくと、ご連絡までの時間が短くなります。</p>
+  <section>
+    <h2 id="trouble">困ったとき</h2>
+    <table>
+      <thead><tr><th>症状</th><th>対処</th></tr></thead>
+      <tbody>
+        <tr><td>受付番号が <code>DEMO-</code> で始まる</td><td>保存されていません。IT担当（長谷部）へ連絡</td></tr>
+        <tr><td>「送信できませんでした」</td><td>電波を確認して再送信。それでもだめなら連絡</td></tr>
+        <tr><td>パスコードが違うと出る</td><td>半角小文字で <code>apra</code></td></tr>
+        <tr><td>郵便番号から住所が入らない</td><td>「住所を検索」を押す。だめなら手入力（送信はできます）</td></tr>
+        <tr><td>あとから結果を見たい</td><td><a href="https://jisha-kappu-scoring-for-customers.vercel.app/eigyo-kakunin.html" target="_blank" rel="noopener">審査結果の確認画面</a>に受付番号とパスコードを入れる</td></tr>
+      </tbody>
+    </table>
   </section>
 
-  <section class="card">
-    <h2>お仕事とご家族</h2>
-    <div class="f">
-      <label for="income">税込年収<span class="req">必須</span><small>（源泉徴収票・給与明細の金額）</small></label>
-      <div class="ib num"><input id="income" inputmode="numeric" autocomplete="off"><i>円</i></div>
-      <p class="hint" id="incHint"></p>
-    </div>
-    <div class="f">
-      <label for="payday">給料日<span class="req">必須</span></label>
-      <div class="ib"><select id="payday"></select></div>
-      <p class="hint">お給料が振り込まれる日です。土日祝のときは前後することがありますが、おおよそで結構です。</p>
-    </div>
-    <div class="f">
-      <span class="lab" id="hl">世帯人数<small>（本人を含む）</small><span class="req">必須</span></span>
-      <div class="seg" role="group" aria-labelledby="hl" id="hh">
-        <button type="button" data-v="1">1人</button><button type="button" data-v="2">2人</button><button type="button" data-v="3">3人</button><button type="button" data-v="4">4人以上</button>
-      </div>
-    </div>
-    <div class="f">
-      <span class="lab" id="sl">お住まい<span class="req">必須</span></span>
-      <div class="seg" role="group" aria-labelledby="sl" id="hc">
-        <button type="button" data-v="with">賃貸・住宅ローン</button><button type="button" data-v="none">持ち家（支払いなし）</button>
-      </div>
-    </div>
+  <section>
+    <h2 id="care">取り扱いの注意</h2>
+    <ul>
+      <li>この仕組みには<b>お客さまの個人情報</b>が入ります。台帳の共有範囲を広げないでください</li>
+      <li>パスコード <code>apra</code> はFSのみ。お客さまの前で入力するところを見られないよう注意してください</li>
+    </ul>
   </section>
 
-  <section class="card">
-    <h2>ご提出いただくもの</h2>
-    <p class="note">提出する書類の種類をお選びください。<br>詳細については、のちほど相談センターのLINEでお伺いします。</p>
-    <div class="f">
-      <span class="lab" id="idLab">身分証<span class="req">必須</span></span>
-      <div class="seg col" role="group" aria-labelledby="idLab" id="idType">
-        <button type="button" data-v="免許証">運転免許証</button><button type="button" data-v="マイナンバーカード">マイナンバーカード</button><button type="button" data-v="それ以外">それ以外（要相談）</button>
-      </div>
-    </div>
-    <div class="f">
-      <span class="lab" id="emgLab">緊急連絡先<span class="req">必須</span></span>
-      <div class="seg col" role="group" aria-labelledby="emgLab" id="emgType">
-        <button type="button" data-v="お勤め先">お勤め先</button><button type="button" data-v="ご親族">契約書に記載以外のご親族</button><button type="button" data-v="それ以外">それ以外（要相談）</button>
-      </div>
-      <div class="f" id="emgRelWrap" hidden>
-        <label for="emgRel">ご本人との続柄<span class="req">必須</span></label>
-        <div class="ib"><input id="emgRel" autocomplete="off" placeholder="母"></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>お借入の状況</h2>
-    <div class="f">
-      <span class="lab" id="legalLab">債務整理・自己破産などのお手続きについて、当てはまるものをお選びください<span class="req">必須</span></span>
-      <div class="seg col" role="group" aria-labelledby="legalLab" id="legal">
-        <button type="button" data-v="none">該当するものはない</button><button type="button" data-v="ongoing">現在、お手続き中またはお支払い中</button><button type="button" data-v="done">過去に手続きをして、完済・手続き完了済み（自己破産歴を含む）</button>
-      </div>
-      <div class="f" id="legalDoneWrap" hidden>
-        <label for="legalDone">完済・手続き完了の時期<span class="req">必須</span></label>
-        <div class="ib"><input id="legalDone" type="month"></div>
-        <p class="hint">おおよそで結構です</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>他社からのお借入</h2>
-    <p class="caution">返済内容により審査結果が異なるため、該当する返済内容を正確に選択してください。</p>
-    <p class="note">住宅ローンは「お住まい」で確認しているため、こちらには入力不要です。お借入がない場合はそのままで結構です。</p>
-    <div class="debts" id="debts"></div>
-    <button type="button" class="add" id="addDebt">＋ お借入を追加</button>
-  </section>
-
-  <section class="card">
-    <h2>確認事項</h2>
-    <p class="note">以下の内容をご確認のうえ、チェックを入れて送信してください。</p>
-    <label class="agree"><input type="checkbox" id="agree1">
-      <span><b>入力内容の確認</b>ご入力いただいた内容に間違いや漏れがないことを確認しました。</span></label>
-    <label class="agree"><input type="checkbox" id="agree2">
-      <span><b>申告内容に関するお願い</b>万が一、入力内容に事実と異なる記載があった場合、審査のお見送りや、ご契約後に分割払いの継続がお受けできなくなる場合があることを確認・了承しました。</span></label>
-    <label class="agree"><input type="checkbox" id="agree3">
-      <span><b>個人情報の取り扱いについて</b>お預かりした個人情報は、本サービスの分割審査・契約手続き、および月々のお支払い管理の目的にのみ使用し、適切に管理されることを確認しました。</span></label>
-  </section>
-</div>
-
-<div class="bar" id="bar">
-  <div class="inner">
-    <p class="barmsg" id="barmsg">未入力の項目があります</p>
-    <button type="button" class="submit" id="submit" disabled>入力内容を送信する</button>
-  </div>
-</div>
-
-<div class="done" id="done">
-  <div class="mk">✓</div>
-  <h2>送信が完了しました</h2>
-  <p>ご入力ありがとうございました。</p>
-  <p>この画面のまま、担当者にお渡しください。</p>
-  <div class="id"><span>受付番号</span><b id="doneId">―</b></div>
-  <p class="back">結果は担当者よりご案内いたします。</p>
-
-  <div class="staffarea">
-    <button type="button" class="staffbtn" id="staffBtn">私は営業担当です</button>
-
-    <div class="passbox" id="passbox" hidden>
-      <label for="pass">パスコード</label>
-      <div class="ib"><input id="pass" type="password" autocomplete="off" inputmode="text"></div>
-      <button type="button" class="passgo" id="passGo">審査結果を表示</button>
-      <p class="passmsg" id="passmsg"></p>
-      <button type="button" class="linkbtn" id="passCancel">閉じる</button>
-    </div>
-
-    <div class="judge" id="judge" hidden>
-      <div class="jmk" id="jmk">―</div>
-      <p class="jv" id="jv">―</p>
-      <p class="jwho" id="jwho"></p>
-      <ol class="jsteps" id="jsteps"></ol>
-      <button type="button" class="linkbtn" id="jhide">結果を隠す</button>
-      <button type="button" class="linkbtn" id="jnew">次のお客さまの入力へ</button>
-    </div>
-  </div>
+  <footer>自社割賦スコアリング（FS用） ／ 最終更新 2026年9月17日</footer>
 </div>
 
 <script>
 (() => {
-  // ============ 設定 ============
-  // Apps Script をデプロイしたときに表示される「ウェブアプリのURL」に差し替えてください
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyk2OQhJXxmD7TtebyIedeYQWkiwUKfYBERpx-agxtcwfl5CUGCo4hoMGvBVvsGRwuT/exec';
-  const TOKEN = 'apra-kappu-2026';   // Apps Script 側の TOKEN と同じ文字列にしてください
-  const READY = !/XXXX/.test(ENDPOINT);   // ENDPOINT を差し替えるまでは動作確認モードで動きます
-
-  const TYPES = [
-    { k: 'sarakin', n: '消費者金融' }, { k: 'bankcard', n: '銀行カードローン' },
-    { k: 'revo', n: 'クレジットカード（リボ・キャッシング）' }, { k: 'bunkatsu', n: 'カード分割・ショッピングローン' },
-    { k: 'carbank', n: '自動車ローン（銀行・信用金庫・JA）' }, { k: 'cardealer', n: '自動車ローン（ディーラー・信販）' },
-    { k: 'edu', n: '教育ローン' }, { k: 'phone', n: 'スマートフォン端末の分割' }, { k: 'other', n: 'その他・わからない' }
-  ];
-
-  const $ = id => document.getElementById(id);
-  const half = s => String(s).replace(/[０-９．，－ー]/g, c => '－ー'.includes(c) ? '-' : String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
-  const digits = s => half(s).replace(/\D/g, '');
-  const parse = s => { const t = digits(s); return t === '' ? null : Number(t); };
-  const man = v => { const x = v / 10000; return (Number.isInteger(x) ? x.toLocaleString('ja-JP') : x.toLocaleString('ja-JP', { maximumFractionDigits: 1 })) + '万円'; };
-
-  function liveComma(el) {
-    el.addEventListener('input', () => {
-      const raw = half(el.value), caret = el.selectionStart ?? raw.length;
-      const before = raw.slice(0, caret).replace(/\D/g, '').length;
-      const all = raw.replace(/\D/g, ''), d = all.replace(/^0+(?=\d)/, '');
-      const out = d ? Number(d).toLocaleString('ja-JP') : '';
-      el.value = out;
-      let pos = 0, seen = 0, target = Math.max(0, before - (all.length - d.length));
-      while (pos < out.length && seen < target) { if (/\d/.test(out[pos])) seen++; pos++; }
-      if (document.activeElement === el) el.setSelectionRange(pos, pos);
-      check();
-    });
+    // 目次（表示中の見出しだけ）
+  function buildToc() {
+    const items = [...document.querySelectorAll('section h2')];
+    document.getElementById('toc').innerHTML = items
+      .map(h => `<li><a href="#${h.id}">${h.childNodes[0].textContent.trim()}</a></li>`).join('');
   }
 
-  const TEST_PASS = 'apra';   // テストモードの切り替えに使うパスコード
-  let TESTING = false;   // 既定は本番。画面を開くたびに必ず本番から始まります
-  let CASE = null;       // 発行URLから開いたときの案件情報
-  const CASE_KEY = new URLSearchParams(location.search).get('k') || '';
-
-  const state = { sex: '', hh: 0, hc: '', legal: '', idType: '', emgType: '', debts: [] };
-  let STAFF = null;   // 使用者リスト（読み込めるまで null）
-  let seq = 0;
-
-  // 支払回数
-  const sel = $('times');
-  for (let i = 3; i <= 60; i += 3) { const o = document.createElement('option'); o.value = i; o.textContent = `${i}回` + (i % 12 === 0 ? `（${i / 12}年）` : ''); sel.appendChild(o); }
-  sel.value = '60';
-  $('price').value = (902000).toLocaleString('ja-JP');
-  $('down').value = '0';
-
-  // 生年月日の上限（今日）
-  const today = new Date();
-  $('birth').max = today.toISOString().slice(0, 10);
-
-  // お電話のご希望日時（曜日＋時刻を3セット）
-  const DAYS = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日'];
-  // 10:00〜19:00 を1時間刻みで
-  const SLOTS = [];
-  for (let h = 10; h <= 19; h++) SLOTS.push(('0' + h).slice(-2) + ':00');
-  const RANKS = [['call1', '第1希望', true], ['call2', '第2希望', true], ['call3', '第3希望', true]];
-  RANKS.forEach(([id, label, req]) => {
-    const row = document.createElement('div');
-    row.className = 'callrow';
-    row.innerHTML = `<span class="rank">${label}${req ? '<span class="req">必須</span>' : ''}</span>`
-      + `<div class="ib"><select id="${id}d" aria-label="${label}の曜日"></select></div>`
-      + `<div class="ib"><select id="${id}t" aria-label="${label}の時刻"></select></div>`;
-    $('callrows').appendChild(row);
-    const d = row.querySelector(`#${id}d`), t = row.querySelector(`#${id}t`);
-    d.appendChild(new Option('曜日', ''));
-    DAYS.forEach(x => d.appendChild(new Option(x, x)));
-    t.appendChild(new Option('時刻', ''));
-    SLOTS.forEach(x => t.appendChild(new Option(x, x)));
-    d.addEventListener('change', check);
-    t.addEventListener('change', check);
-  });
-  const callVal = (id, k) => ($(id + k).value || '').trim();
-  const callPref = id => {
-    const d = callVal(id, 'd'), t = callVal(id, 't');
-    return (d && t) ? d + '・' + t : '';
-  };
-
-  // 給料日の選択肢
-  const pd = $('payday');
-  pd.appendChild(new Option('選択してください', ''));
-  for (let i = 1; i <= 31; i++) pd.appendChild(new Option(`${i}日`, String(i)));
-  pd.appendChild(new Option('月末', '月末'));
-  pd.appendChild(new Option('決まっていない・その他', 'その他'));
-  pd.addEventListener('change', check);
-
-  ['price', 'down', 'income'].forEach(id => liveComma($(id)));
-  document.querySelectorAll('.plan').forEach(b => b.addEventListener('click', () => {
-    $('price').value = Number(b.dataset.price).toLocaleString('ja-JP');
-    document.querySelectorAll('.plan').forEach(x => x.setAttribute('aria-pressed', x === b));
-    check();
+  // URLコピー
+  document.querySelectorAll('.copy').forEach(btn => btn.addEventListener('click', async () => {
+    const el = btn.previousElementSibling;
+    const url = (el.tagName === 'A' ? el.getAttribute('href') : 'https://' + el.textContent.trim());
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = 'コピーしました'; btn.classList.add('done');
+      setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('done'); }, 1800);
+    } catch (e) {
+      btn.textContent = '選択してコピーしてください';
+      setTimeout(() => { btn.textContent = 'コピー'; }, 2200);
+    }
   }));
-  [['sex', 'sex'], ['hh', 'hh'], ['hc', 'hc'], ['legal', 'legal'], ['idType', 'idType'], ['emgType', 'emgType']].forEach(([id, key]) =>
-    $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-      state[key] = key === 'hh' ? Number(b.dataset.v) : b.dataset.v;
-      $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
-      if (key === 'legal') {
-        $('legalDoneWrap').hidden = state.legal !== 'done';
-        if (state.legal !== 'done') $('legalDone').value = '';
-      }
-      if (key === 'emgType') {
-        $('emgRelWrap').hidden = state.emgType !== 'ご親族';
-        if (state.emgType !== 'ご親族') $('emgRel').value = '';
-      }
-      check();
-    })));
-  ['staffName', 'lastName', 'firstName', 'lastKana', 'firstKana', 'tel', 'zip', 'pref', 'city', 'addr1', 'addr2', 'birth',
-   'emgRel', 'legalDone'].forEach(id => $(id).addEventListener('input', check));
-  ['agree1', 'agree2', 'agree3'].forEach(id => $(id).addEventListener('change', check));
-  sel.addEventListener('change', check);
 
-  // ============ 発行URLから開いたとき ============
-  async function loadCase() {
-    if (!CASE_KEY) {
-      // この画面は、担当者が発行したURLからのみ使えます
-      $('caseErr').innerHTML = '<b>このページは直接開けません</b>'
-        + '担当者が発行したお申し込み用のURLから、お進みください。'
-        + 'お手元にURLがない場合は、ご担当者へご連絡ください。';
-      $('caseErr').hidden = false;
-      $('lead').hidden = true;
-      $('form').querySelectorAll('section.card, .bar').forEach(el => { el.hidden = true; });
-      $('bar').hidden = true;
-      return;
-    }
-    // 担当者が入れる欄は隠して、内容は読み取り専用で見せる
-    $('staffCard').hidden = true;
-    $('planFixed').hidden = false;
-    if (!READY) {
-      CASE = { staff: '（動作確認）', price: 902000, down: 0, times: 60 };
-      showCase(); return;
-    }
-    try {
-      const j = await jsonp(ENDPOINT + '?mode=case&token=' + encodeURIComponent(TOKEN) + '&key=' + encodeURIComponent(CASE_KEY));
-      if (!j.ok) throw new Error(j.error);
-      CASE = j;
-      if (j.is_test) { TESTING = true; applyTest(); }
-      showCase();
-    } catch (e) {
-      const msg = {
-        'expired': ['このURLは期限切れです', 'お手数ですが、担当者へご連絡ください。新しいURLをお送りします。'],
-        'used': ['このURLは入力済みです', 'すでにご入力いただいています。結果は担当者よりご案内いたします。'],
-        'not found': ['このURLは無効です', 'お手数ですが、担当者へご連絡ください。']
-      }[String(e.message)] || ['読み込めませんでした', '通信環境をご確認のうえ、画面を開き直してください。'];
-      $('caseErr').innerHTML = `<b>${msg[0]}</b>${msg[1]}`;
-      $('caseErr').hidden = false;
-      $('planFixed').hidden = true;
-      $('form').querySelectorAll('section.card, .bar').forEach(el => { if (el !== $('caseErr')) el.hidden = true; });
-      $('bar').hidden = true;
-    }
-  }
-  function showCase() {
-    $('price').value = Number(CASE.price).toLocaleString('ja-JP');
-    $('down').value = Number(CASE.down).toLocaleString('ja-JP');
-    $('times').value = String(CASE.times);
-    $('staffName').value = CASE.staff;
-    $('fxPrice').textContent = Number(CASE.price).toLocaleString('ja-JP') + '円';
-    $('fxDown').textContent = Number(CASE.down).toLocaleString('ja-JP') + '円';
-    $('fxTimes').textContent = CASE.times + '回';
-    $('fxStaff').textContent = CASE.staff;
-    $('tbadge2').hidden = !TESTING;
-    check();
-  }
-
-  // ============ 担当者プルダウン（使用者リスト） ============
-  function jsonp(url) {
-    return new Promise((resolve, reject) => {
-      const cb = 'cb' + Date.now() + Math.floor(Math.random() * 1000);
-      const sc = document.createElement('script');
-      const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 12000);
-      function cleanup() { clearTimeout(timer); delete window[cb]; sc.remove(); }
-      window[cb] = j => { cleanup(); resolve(j); };
-      sc.onerror = () => { cleanup(); reject(new Error('error')); };
-      sc.src = url + '&callback=' + cb;
-      document.body.appendChild(sc);
-    });
-  }
-
-  async function loadStaff() {
-    if (!READY) { STAFF = null; $('staffHint').textContent = '動作確認モードのため、名前は自由に入力できます'; return; }
-    try {
-      const j = await jsonp(ENDPOINT + '?mode=staff&token=' + encodeURIComponent(TOKEN));
-      if (!j.ok) throw new Error(j.error);
-      STAFF = j.staff || [];
-      $('staffHint').textContent = `使用者リストの${STAFF.length}名から選べます`;
-    } catch (e) {
-      STAFF = null;
-      $('staffHint').textContent = '一覧を読み込めませんでした。名前を直接入力してください';
-    }
-    check();
-  }
-
-  const combo = { open: false, idx: -1, items: [] };
-  const staffInput = $('staffName'), staffList = $('staffList');
-
-  // ひらがな・カタカナ・全角英数のどれで打っても当たるようにそろえる
-  function norm(t) {
-    return String(t).toLowerCase()
-      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-      .replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60))
-      .replace(/[\s　]/g, '');
-  }
-  function matches(q) {
-    if (!STAFF) return [];
-    const t = norm(q);
-    if (!t) return STAFF;
-    return STAFF.filter(s => norm(s.name + s.kana + s.dept).includes(t));
-  }
-  function renderList(items) {
-    combo.items = items;
-    staffList.innerHTML = items.length
-      ? items.map((s, i) => `<li role="option" data-i="${i}" aria-selected="${i === combo.idx}">${s.name}${s.dept ? `<small>${s.dept}</small>` : ''}</li>`).join('')
-      : '<li class="none">該当する担当者がいません</li>';
-  }
-  function openList(items) {
-    if (!STAFF) return;
-    renderList(items);
-    staffList.hidden = false; combo.open = true;
-    staffInput.setAttribute('aria-expanded', 'true');
-  }
-  function closeList() {
-    staffList.hidden = true; combo.open = false; combo.idx = -1;
-    staffInput.setAttribute('aria-expanded', 'false');
-  }
-  function pick(i) {
-    const s = combo.items[i];
-    if (!s) return;
-    staffInput.value = s.name; closeList(); check();
-  }
-
-  staffInput.addEventListener('input', () => { combo.idx = -1; openList(matches(staffInput.value)); check(); });
-  staffInput.addEventListener('focus', () => openList(matches(staffInput.value)));
-  $('caret').addEventListener('click', () => {
-    if (combo.open) { closeList(); } else { staffInput.focus(); openList(matches('')); }
-  });
-  staffInput.addEventListener('keydown', e => {
-    if (!combo.open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { openList(matches(staffInput.value)); return; }
-    if (!combo.open) return;
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      const n = combo.items.length; if (!n) return;
-      combo.idx = e.key === 'ArrowDown' ? (combo.idx + 1) % n : (combo.idx - 1 + n) % n;
-      renderList(combo.items);
-      staffList.children[combo.idx]?.scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'Enter') {
-      if (combo.idx >= 0) { e.preventDefault(); pick(combo.idx); }
-      else if (combo.items.length === 1) { e.preventDefault(); pick(0); }
-    } else if (e.key === 'Escape') { closeList(); }
-  });
-  staffList.addEventListener('mousedown', e => {
-    const li = e.target.closest('li[data-i]');
-    if (li) { e.preventDefault(); pick(Number(li.dataset.i)); }
-  });
-  document.addEventListener('click', e => { if (!$('combo').contains(e.target)) closeList(); });
-
-  loadStaff();
-  loadCase();
-
-  // 年齢
-  function age() {
-    const v = $('birth').value;
-    if (!v) return null;
-    const b = new Date(v + 'T00:00:00');
-    if (isNaN(b)) return null;
-    let a = today.getFullYear() - b.getFullYear();
-    const m = today.getMonth() - b.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < b.getDate())) a--;
-    return a;
-  }
-
-  // 郵便番号 → 住所（fetch → だめならJSONP → だめなら手入力）
-  let zipDone = '';
-  function fillAddr(r) {
-    $('pref').value = r.address1;
-    $('city').value = r.address2 + r.address3;
-    $('zipHint').textContent = '住所を入れました。番地以降をご入力ください';
-    $('addr1').focus(); check();
-  }
-  function zipJsonp(z) {
-    return new Promise((resolve, reject) => {
-      const cb = 'zipcb' + Date.now();
-      const sc = document.createElement('script');
-      const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 6000);
-      function cleanup() { clearTimeout(timer); delete window[cb]; sc.remove(); }
-      window[cb] = j => { cleanup(); resolve(j); };
-      sc.onerror = () => { cleanup(); reject(new Error('script error')); };
-      sc.src = `https://zipcloud.ibsnet.co.jp/api/search?zipcode=${z}&callback=${cb}`;
-      document.body.appendChild(sc);
-    });
-  }
-  async function lookupZip(force) {
-    const z = digits($('zip').value).slice(0, 7);
-    if (z.length !== 7) { if (force) $('zipHint').textContent = '郵便番号を7桁で入力してください'; return; }
-    if (!force && z === zipDone) return;
-    zipDone = z;
-    $('zipBtn').disabled = true;
-    $('zipHint').textContent = '住所を検索しています…';
-    let j = null;
-    try { j = await (await fetch('https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + z)).json(); }
-    catch (e) { try { j = await zipJsonp(z); } catch (e2) { j = null; } }
-    $('zipBtn').disabled = false;
-    const r = j && j.results && j.results[0];
-    if (r) fillAddr(r);
-    else if (j) $('zipHint').textContent = '住所が見つかりませんでした。都道府県から手入力してください';
-    else $('zipHint').textContent = '住所の自動入力ができませんでした。都道府県から手入力してください';
-  }
-  $('zip').addEventListener('input', () => {
-    $('zip').value = digits($('zip').value).slice(0, 7);
-    check();
-    lookupZip(false);
-  });
-  $('zipBtn').addEventListener('click', () => lookupZip(true));
-
-  // 他社借入
-  function buildDebts() {
-    const box = $('debts');
-    box.innerHTML = state.debts.length ? '' : '<p class="empty">お借入はありません</p>';
-    state.debts.forEach((d, i) => {
-      const row = document.createElement('div');
-      row.className = 'debt';
-      row.innerHTML = `<div class="head">
-          <select aria-label="${i + 1}件目の種類">${TYPES.map(t => `<option value="${t.k}" ${t.k === d.type ? 'selected' : ''}>${t.n}</option>`).join('')}</select>
-          <button type="button" class="del">削除</button></div>
-        <div class="row2">
-          <div><label>毎月の返済額</label><div class="ib"><input data-k="monthly" inputmode="numeric" value="${d.monthly ? Number(d.monthly).toLocaleString('ja-JP') : ''}"></div></div>
-          <div><label>残りの回数（ヶ月）</label><div class="ib"><input data-k="months" inputmode="numeric" value="${d.months ?? ''}"></div></div>
-        </div>`;
-      row.querySelector('select').addEventListener('change', e => { d.type = e.target.value; });
-      row.querySelector('.del').addEventListener('click', () => { state.debts = state.debts.filter(x => x.id !== d.id); buildDebts(); check(); });
-      row.querySelectorAll('input').forEach(inp => {
-        if (inp.dataset.k === 'monthly') liveComma(inp);
-        inp.addEventListener('input', () => { d[inp.dataset.k] = parse(inp.value) ?? ''; check(); });
-      });
-      box.appendChild(row);
-    });
-  }
-  $('addDebt').addEventListener('click', () => {
-    state.debts.push({ id: ++seq, type: 'sarakin', monthly: '', months: '' });
-    buildDebts(); check();
-    const rows = $('debts').querySelectorAll('.debt');
-    rows[rows.length - 1].querySelector('select').focus();
-  });
-
-  // 入力チェック
-  function check() {
-    const v = id => $(id).value.trim();
-    const a = age();
-    $('ageHint').textContent = a === null ? '' : `${a}歳`;
-    $('birthErr').classList.toggle('on', a !== null && a < 18);
-    if (a !== null && a < 18) $('birthErr').textContent = '18歳未満の方は、この場ではお申し込みいただけません。担当者にお声がけください。';
-
-    const tel = digits(v('tel'));
-    const telOk = /^0\d{9,10}$/.test(tel);
-    $('telErr').classList.toggle('on', tel.length > 0 && !telOk);
-    $('tel').parentElement.classList.toggle('bad', tel.length > 0 && !telOk);
-
-    const income = parse(v('income'));
-    $('incHint').textContent = income ? man(income) : '';
-
-    const missing = [];
-    if (!parse(v('price'))) missing.push('商品金額');
-    const staffName = v('staffName');
-    const staffOk = CASE ? true : (STAFF ? STAFF.some(s => s.name === staffName) : staffName.length > 0);
-    if (!staffOk) missing.push(staffName && STAFF ? '担当者名（一覧から選んでください）' : '担当者名');
-    $('staffName').parentElement.classList.toggle('bad', !!staffName && !staffOk);
-    ['lastName', 'firstName', 'lastKana', 'firstKana'].forEach(id => { if (!v(id)) missing.push('お名前'); });
-    if (!v('birth') || a === null) missing.push('生年月日');
-    if (!state.sex) missing.push('性別');
-    if (!telOk) missing.push('電話番号');
-    if (digits(v('zip')).length !== 7) missing.push('郵便番号');
-    ['pref', 'city', 'addr1'].forEach(id => { if (!v(id)) missing.push('ご住所'); });
-    if (!income) missing.push('税込年収');
-    if (!v('payday')) missing.push('給料日');
-    RANKS.forEach(([id, label]) => {
-      if (!callPref(id)) missing.push('お電話のご希望日時（' + label + '）');
-    });
-    if (!state.hh) missing.push('世帯人数');
-    if (!state.hc) missing.push('お住まい');
-    if (!state.idType) missing.push('身分証の選択');
-    if (!state.emgType) missing.push('緊急連絡先の選択');
-    else if (state.emgType === 'ご親族' && !v('emgRel')) missing.push('緊急連絡先の続柄');
-    if (!state.legal) missing.push('お借入の状況');
-    else if (state.legal === 'done' && !v('legalDone')) missing.push('完済・手続き完了の時期');
-    state.debts.forEach((d, i) => { if (!Number(d.monthly)) missing.push(`お借入${i + 1}件目の返済額`); });
-    if (!($('agree1').checked && $('agree2').checked && $('agree3').checked)) missing.push('確認事項のチェック');
-
-    const uniq = [...new Set(missing)];
-    const minor = a !== null && a < 18;
-    const ok = uniq.length === 0 && !minor;
-    $('submit').disabled = !ok;
-    const msg = $('barmsg');
-    if (minor) { msg.textContent = '18歳未満の方は担当者にお声がけください'; msg.classList.add('bad'); }
-    else if (ok) {
-      msg.textContent = !READY ? '動作確認モード：送信しても保存されません' : '入力内容をご確認のうえ、送信してください';
-      msg.classList.remove('bad');
-    }
-    else { msg.textContent = `未入力：${uniq.slice(0, 3).join('、')}${uniq.length > 3 ? ` ほか${uniq.length - 3}件` : ''}`; msg.classList.remove('bad'); }
-    return ok;
-  }
-
-  // 送信
-  $('submit').addEventListener('click', async () => {
-    if (!check()) return;
-    const btn = $('submit');
-    btn.disabled = true; btn.textContent = '送信しています…';
-    const v = id => $(id).value.trim();
-    const payload = {
-      token: TOKEN,
-      staff_name: v('staffName'),
-      last_name: v('lastName'), first_name: v('firstName'),
-      last_kana: v('lastKana'), first_kana: v('firstKana'),
-      birth_date: v('birth'), age: age(), sex: state.sex,
-      tel: digits(v('tel')),
-      zip: digits(v('zip')), pref: v('pref'), city: v('city'), address1: v('addr1'), address2: v('addr2'),
-      price: parse(v('price')), down: parse(v('down')) || 0, times: Number(sel.value),
-      call1: callPref('call1'), call2: callPref('call2'), call3: callPref('call3'),
-      income: parse(v('income')), payday: v('payday'), household: state.hh, housing: state.hc,
-      id_type: state.idType, emg_type: state.emgType, emg_rel: state.emgType === 'ご親族' ? v('emgRel') : '',
-      legal_status: state.legal, legal_done: state.legal === 'done' ? v('legalDone') : '',
-      debts: state.debts.map(d => ({ type: d.type, monthly: Number(d.monthly) || 0, months: Number(d.months) || 0 })),
-      is_test: TESTING,
-      case_key: CASE_KEY,
-      user_agent: navigator.userAgent
-    };
-    try {
-      let json;
-      if (!READY) {
-        // 送信先が未設定：画面の動きだけ確認できるモード（スプレッドシートには保存されません）
-        await new Promise(r => setTimeout(r, 400));
-        json = { ok: true, id: 'DEMO-' + String(Date.now()).slice(-3) };
-      } else {
-        const res = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(payload) });
-        json = await res.json();
-      }
-      if (!json.ok) throw new Error(json.error || 'error');
-      $('form').style.display = 'none'; $('bar').style.display = 'none';
-      $('doneId').textContent = json.id;
-      window.__setId(json.id);
-      if (TESTING) {
-        const t = document.createElement('p');
-        t.className = 'donetest';
-        t.textContent = 'テストとして記録しました（集計には入りません）';
-        $('done').querySelector('.id').after(t);
-      }
-      if (!READY) {
-        const n = document.createElement('p');
-        n.className = 'demo';
-        n.textContent = '動作確認モードです。Apps ScriptのURLを設定するまで、内容は保存されません。';
-        $('done').querySelector('.id').after(n);
-      }
-      $('done').classList.add('on');
-      window.scrollTo(0, 0);
-    } catch (e) {
-      btn.disabled = false; btn.textContent = '入力内容を送信する';
-      const msg = $('barmsg');
-      const m = String(e.message);
-      msg.textContent = m === 'bad staff' ? '担当者名が使用者リストにありません。一覧から選び直してください'
-        : m === 'expired' ? 'このURLは期限切れです。担当者へご連絡ください'
-        : m === 'used' ? 'このURLは入力済みです。結果は担当者よりご案内いたします'
-        : m === 'not found' ? 'このURLは無効です。担当者へご連絡ください'
-        : '送信できませんでした。通信環境をご確認のうえ、もう一度お試しください';
-      msg.classList.add('bad');
-    }
-  });
-
-  // ============ テストモード（隠し機能）============
-  // タイトルを3回続けてタップすると、パスコード欄が出ます。
-  function applyTest() {
-    document.body.classList.toggle('testing', TESTING);
-    $('tbar').hidden = !TESTING;
-    $('tbadge').hidden = !TESTING;
-    check();
-  }
-  let taps = 0, tapTimer = null;
-  document.querySelector('h1').addEventListener('click', () => {
-    taps++;
-    clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => { taps = 0; }, 1200);
-    if (taps < 3) return;
-    taps = 0;
-    if (CASE_KEY) return;   // 発行URLから開いたときは切り替えない
-    if (TESTING) { TESTING = false; applyTest(); return; }   // オンのときは即オフ
-    $('tpass').hidden = false; $('tpassInput').focus();
-  });
-
-  $('tpassCancel').addEventListener('click', () => {
-    $('tpass').hidden = true; $('tpassInput').value = '';
-  });
-  $('tpassInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('tpassGo').click(); });
-  $('tpassGo').addEventListener('click', () => {
-    if ($('tpassInput').value.trim() === TEST_PASS) { TESTING = true; applyTest(); }
-    $('tpass').hidden = true; $('tpassInput').value = '';
-  });
-  applyTest();
-
-  buildDebts(); check();
-
-  // ============ 営業担当だけが結果を見る ============
-  let lastId = '';
-
-  // Googleの転送に影響されないよう、JSONPで取りにいく
-  function lookupJsonp(id, pass) {
-    return new Promise((resolve, reject) => {
-      const cb = 'lkcb' + Date.now();
-      const sc = document.createElement('script');
-      const timer = setTimeout(() => { cleanup(); reject(new Error('照会がタイムアウトしました')); }, 12000);
-      function cleanup() { clearTimeout(timer); delete window[cb]; sc.remove(); }
-      window[cb] = j => { cleanup(); resolve(j); };
-      sc.onerror = () => { cleanup(); reject(new Error('照会できませんでした')); };
-      sc.src = ENDPOINT + '?mode=lookup&callback=' + cb
-        + '&id=' + encodeURIComponent(id) + '&pass=' + encodeURIComponent(pass);
-      document.body.appendChild(sc);
-    });
-  }
-
-  const show = (id, on) => { $(id).hidden = !on; };
-
-  $('staffBtn').addEventListener('click', () => {
-    show('passbox', true); $('staffBtn').hidden = true; $('pass').focus();
-  });
-  $('passCancel').addEventListener('click', () => {
-    show('passbox', false); $('staffBtn').hidden = false; $('pass').value = ''; $('passmsg').textContent = '';
-  });
-  $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') $('passGo').click(); });
-  $('jhide').addEventListener('click', () => {
-    show('judge', false); $('staffBtn').hidden = false; $('pass').value = '';
-  });
-  $('jnew').addEventListener('click', () => location.reload());
-
-  $('passGo').addEventListener('click', async () => {
-    const pass = $('pass').value.trim();
-    if (!pass) { $('passmsg').textContent = 'パスコードを入力してください'; return; }
-    $('passGo').disabled = true; $('passGo').textContent = '確認しています…'; $('passmsg').textContent = '';
-    try {
-      let j;
-      if (!READY) {
-        await new Promise(r => setTimeout(r, 300));
-        if (pass !== 'apra') throw new Error('パスコードが違います');
-        throw new Error('動作確認モードのため、審査結果は表示できません');
-      } else {
-        j = await lookupJsonp(lastId, pass);
-      }
-      if (!j.ok) throw new Error(j.error === 'bad pass' ? 'パスコードが違います' : '照会できませんでした');
-
-      const ok = j.result === '可決', hold = j.result === '要確認';
-      const box = $('judge');
-      box.dataset.s = ok ? 'ok' : hold ? 'hold' : 'ng';
-      $('jmk').textContent = ok ? '可' : hold ? '？' : '否';
-      $('jv').textContent = ok ? '手続き可' : hold ? '要確認' : '手続き不可';
-      $('jwho').textContent = `${j.name}さま（受付番号 ${j.id}）`;
-      const steps = ok
-        ? ['RMより締結許可の共有があるまでお待ちください。', '身分証・携帯名義・就業状況を確認してください。']
-        : hold
-          ? ['入力内容に不足があります。該当する審査結果通知スレッドで共有してください。']
-          : ['条件つき再審査可能な場合があります。', '再審査を希望する場合は、該当する審査結果通知スレッドで共有してください。'];
-      $('jsteps').innerHTML = steps.map(t => `<li>${t}</li>`).join('');
-      show('passbox', false); show('judge', true);
-      $('pass').value = '';
-    } catch (err) {
-      $('passmsg').textContent = err.message || '照会できませんでした';
-    } finally {
-      $('passGo').disabled = false; $('passGo').textContent = '審査結果を表示';
-    }
-  });
-
-  window.__setId = v => { lastId = v; };
+  buildToc();
 })();
 </script>
 </body>
