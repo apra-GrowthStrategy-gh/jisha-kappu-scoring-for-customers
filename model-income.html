@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>最低年収モデル｜自社スコアの感度を見る</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#EBEEF2; --paper:#FFFFFF; --ink:#16213A; --ink-2:#3C4659; --sub:#667085;
+  --rule:#D5DBE3; --rule-soft:#E8ECF1; --focus:#2B4C8C;
+  --shu:#C23A1E; --moss:#1D7050; --moss-bg:#E7F3EC;
+  --c-live:#7E8BA6;   /* 生活維持費 */
+  --c-other:#B7791F;  /* 他社返済 */
+  --c-own:#16213A;    /* 自社返済 */
+  --radius:6px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desk);color:var(--ink);
+  font-family:"BIZ UDPGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;
+  font-size:14px;line-height:1.65;font-variant-numeric:tabular-nums}
+.wrap{max-width:1240px;margin:0 auto;padding:36px 24px 64px}
+h1{font-size:30px;line-height:1.3;margin:0}
+.lead{margin:6px 0 0;color:var(--ink-2);max-width:46em}
+button,select,input{font:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* ── 式（主役）── */
+.eq{margin:24px 0 24px;background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);padding:22px 26px 18px}
+.eq-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.eq-top p{margin:0;font-size:13px;color:var(--sub)}
+.tabs{display:inline-flex;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden}
+.tabs button{border:none;background:#FAFBFC;padding:5px 12px;font-size:13px;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--rule)}
+.tabs button:last-child{border-right:none}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.formula{display:flex;align-items:flex-end;flex-wrap:wrap;gap:6px 12px;font-size:17px}
+.term{display:flex;flex-direction:column;align-items:flex-start;padding:0 2px}
+.term .sym{font-size:13px;color:var(--sub);white-space:nowrap}
+.term .num{font-size:34px;font-weight:700;line-height:1.15;border-bottom:4px solid currentColor;padding-bottom:2px;white-space:nowrap}
+.term.live .num{color:var(--c-live)} .term.other .num{color:var(--c-other)} .term.own .num{color:var(--c-own)}
+.term.total .num{color:var(--ink);border-bottom:4px double var(--ink)}
+.op{font-size:28px;color:var(--sub);padding-bottom:10px}
+@media (max-width:560px){.eq{padding:16px}.formula{gap:4px 8px}.term .num{font-size:22px;border-bottom-width:3px}.term .sym{font-size:11px}.op{font-size:18px;padding-bottom:6px}}
+.eq-note{margin:10px 0 0;font-size:13px;color:var(--ink-2)}
+.eq-note b{color:var(--shu)}
+
+/* ── レイアウト ── */
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius)}
+.controls{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;padding:6px 20px 18px}
+@media (max-width:960px){.controls{position:static;max-height:none}}
+.cg{padding:14px 0 8px;border-bottom:1px solid var(--rule-soft)}
+.cg:last-of-type{border-bottom:none}
+.cg h2{font-size:14px;margin:0 0 6px}
+.ctl{padding:7px 0}
+.ctl .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ctl label,.ctl .lab{font-size:13px;color:var(--ink-2)}
+.ctl label small,.ctl .lab small{display:block;font-size:11px;color:var(--sub);line-height:1.4}
+.ctl output{font-size:15px;font-weight:700;white-space:nowrap}
+input[type=range]{width:100%;margin:6px 0 0;accent-color:var(--ink)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;margin-top:4px}
+.seg button{flex:1;border:none;border-right:1px solid var(--rule);background:#FAFBFC;padding:6px 4px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.seg button:last-child{border-right:none}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.sel{width:100%;margin-top:4px;padding:6px 8px;border:1px solid var(--rule);border-radius:var(--radius);background:#FAFBFC}
+.nums{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;margin-top:4px}
+.nums span{font-size:13px;color:var(--ink-2)}
+.nbox{display:flex;align-items:center;border:1px solid var(--rule);border-radius:var(--radius);background:#FAFBFC;padding:0 8px}
+.nbox input{flex:1;min-width:0;border:none;background:transparent;text-align:right;padding:5px 0;font-size:14px}
+.nbox input:focus-visible{outline:none}
+.nbox:focus-within{border-color:var(--focus)}
+.nbox i{font-style:normal;font-size:12px;color:var(--sub);margin-left:6px}
+.btns{display:flex;flex-direction:column;gap:8px;padding:14px 0 4px}
+.btn{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:var(--radius);padding:8px 10px;cursor:pointer;font-size:13px}
+.btn.ghost{background:#fff;color:var(--ink)}
+.fitinfo{font-size:12px;color:var(--ink-2);background:#F6F7F9;border-radius:4px;padding:8px 10px;margin:4px 0 0;line-height:1.6}
+
+.charts{display:flex;flex-direction:column;gap:24px}
+.chart{padding:20px 22px 18px}
+.chart h2{font-size:17px;margin:0}
+.chart .desc{font-size:13px;color:var(--sub);margin:2px 0 10px;max-width:60em}
+.plot{width:100%}
+.plot svg{display:block;width:100%;height:auto;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink-2);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:18px;height:0;border-top:3px solid}
+.sw.dash{border-top-style:dashed;border-top-width:2px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.ring{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--shu)}
+
+.resid{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+.resid th,.resid td{padding:7px 8px;border-bottom:1px solid var(--rule-soft);text-align:right}
+.resid th{font-weight:400;color:var(--sub);border-bottom:1px solid var(--ink-2)}
+.resid th:first-child,.resid td:first-child{text-align:left}
+.resid td.pos{color:var(--shu)} .resid td.neg{color:var(--focus)}
+.resid-note{font-size:12px;color:var(--sub);margin:6px 0 0}
+
+.gridtbl{width:100%;border-collapse:collapse;font-size:13px}
+.gridtbl th,.gridtbl td{padding:8px;border:1px solid var(--rule);text-align:right}
+.gridtbl th{background:#F6F7F9;font-weight:700;color:var(--ink-2)}
+.gridtbl th:first-child,.gridtbl td:first-child{text-align:left}
+.gridtbl tr.on td{background:var(--ink);color:#fff;font-weight:700}
+.gridtbl td small{display:block;font-size:11px;opacity:.75}
+
+svg text{font-family:inherit;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>最低年収モデル</h1>
+  <p class="lead">自社スコアの式を年収について解いた一般式です。係数を動かすと、必要な年収がどう変わるかと、堀内さんのラインにどこまで近づくかがグラフで見られます。</p>
+
+  <!-- 式 -->
+  <section class="eq" aria-live="polite">
+    <div class="eq-top">
+      <p id="eqCond">―</p>
+      <div class="tabs" role="group" aria-label="式に表示するプラン" id="focusTabs">
+        <button type="button" data-i="0">満額</button><button type="button" data-i="1">MPA/VPA</button><button type="button" data-i="2">MPC/VPC</button>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="term total"><span class="sym">必要年収 Y*</span><span class="num" id="eTotal">―</span></div>
+      <span class="op">＝</span>
+      <div class="term live"><span class="sym">生活維持費 L</span><span class="num" id="eL">―</span></div>
+      <span class="op">＋</span>
+      <div class="term other"><span class="sym" id="eOtherSym">12 × α × M</span><span class="num" id="eO">―</span></div>
+      <span class="op">＋</span>
+      <div class="term own"><span class="sym" id="eOwnSym">A ÷ k</span><span class="num" id="eA">―</span></div>
+    </div>
+    <p class="eq-note" id="eqNote">―</p>
+  </section>
+
+  <div class="grid">
+    <!-- 操作 -->
+    <aside class="panel controls" aria-label="変数">
+      <div class="cg">
+        <h2>審査の係数</h2>
+        <div class="ctl">
+          <div class="row"><label for="k">k<small>余力のうち自社返済に回せる割合</small></label><output data-out="k"></output></div>
+          <input type="range" id="k" data-key="k" min="0.2" max="1" step="0.01">
+        </div>
+        <div class="ctl">
+          <div class="row"><label for="alpha">α<small>他社返済を何倍で見るか</small></label><output data-out="alpha"></output></div>
+          <input type="range" id="alpha" data-key="alpha" min="1" max="2" step="0.05">
+        </div>
+        <div class="ctl">
+          <div class="row"><label for="beta">β<small>返済比率の上限（自社ローン込み・対年収）</small></label><output data-out="beta"></output></div>
+          <input type="range" id="beta" data-key="beta" min="0.05" max="0.5" step="0.01">
+        </div>
+      </div>
+
+      <div class="cg">
+        <h2>お客さま</h2>
+        <div class="ctl">
+          <span class="lab" id="hLab">世帯人数 h</span>
+          <div class="seg" role="group" aria-labelledby="hLab" data-seg="h">
+            <button type="button" data-v="1">1人</button><button type="button" data-v="2">2人</button><button type="button" data-v="3">3人</button><button type="button" data-v="4">4人+</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <span class="lab" id="sLab">住宅コスト s</span>
+          <div class="seg" role="group" aria-labelledby="sLab" data-seg="s">
+            <button type="button" data-v="with">あり</button><button type="button" data-v="none">なし（持ち家）</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="row"><label for="add">生活維持費の上乗せ<small>割販法の表に足す額</small></label><output data-out="add"></output></div>
+          <input type="range" id="add" data-key="add" min="-500000" max="1000000" step="10000">
+        </div>
+        <div class="ctl">
+          <div class="row"><label for="M">他社の毎月返済 M</label><output data-out="M"></output></div>
+          <input type="range" id="M" data-key="M" min="0" max="100000" step="1000">
+        </div>
+        <div class="ctl">
+          <div class="row"><label for="Y">試しの年収<small>グラフ1に横線で表示</small></label><output data-out="Y"></output></div>
+          <input type="range" id="Y" data-key="Y" min="800000" max="4000000" step="10000">
+        </div>
+      </div>
+
+      <div class="cg">
+        <h2>自社ローン</h2>
+        <div class="ctl">
+          <label for="n">支払回数 n</label>
+          <select class="sel" id="n" data-key="n"></select>
+        </div>
+        <div class="ctl">
+          <div class="row"><label for="D">頭金 D</label><output data-out="D"></output></div>
+          <input type="range" id="D" data-key="D" min="0" max="300000" step="5000">
+        </div>
+        <div class="ctl">
+          <div class="row"><label for="rate">実質年率</label><output data-out="rate"></output></div>
+          <input type="range" id="rate" data-key="rate" min="0" max="15" step="0.1">
+        </div>
+        <div class="ctl">
+          <span class="lab">プラン価格（元金）</span>
+          <div class="nums">
+            <span>満額</span><div class="nbox"><input data-arr="prices" data-i="0" data-scale="1" inputmode="numeric" aria-label="満額の元金"><i>円</i></div>
+            <span>MPA/VPA</span><div class="nbox"><input data-arr="prices" data-i="1" data-scale="1" inputmode="numeric" aria-label="MPA/VPAの元金"><i>円</i></div>
+            <span>MPC/VPC</span><div class="nbox"><input data-arr="prices" data-i="2" data-scale="1" inputmode="numeric" aria-label="MPC/VPCの元金"><i>円</i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cg">
+        <h2>堀内さんのライン</h2>
+        <div class="nums">
+          <span>満額</span><div class="nbox"><input data-arr="targets" data-i="0" data-scale="10000" inputmode="decimal" aria-label="満額の最低年収"><i>万円</i></div>
+          <span>MPA/VPA</span><div class="nbox"><input data-arr="targets" data-i="1" data-scale="10000" inputmode="decimal" aria-label="MPA/VPAの最低年収"><i>万円</i></div>
+          <span>MPC/VPC</span><div class="nbox"><input data-arr="targets" data-i="2" data-scale="10000" inputmode="decimal" aria-label="MPC/VPCの最低年収"><i>万円</i></div>
+        </div>
+        <div class="btns">
+          <button type="button" class="btn" id="fitK">k を堀内さんのラインに合わせる</button>
+          <button type="button" class="btn ghost" id="resetSheet">旧設定（k=0.9）に戻す</button>
+        </div>
+        <p class="fitinfo" id="fitInfo">―</p>
+      </div>
+    </aside>
+
+    <!-- グラフ -->
+    <main class="charts">
+      <section class="panel chart">
+        <h2>1. 元金ごとの必要年収</h2>
+        <p class="desc">線の高さの起点が L ＋ 12αM、傾きが c(n) ÷ k です。赤い輪が堀内さんのライン、黒い点がいまの設定でのモデル値です。</p>
+        <div class="plot" id="c1"></div>
+        <div class="legend">
+          <span><i class="sw" style="border-color:var(--ink)"></i>いまの設定</span>
+          <span><i class="sw dash" style="border-color:#A3ACBC"></i>旧設定（k=0.9・α=1.3・上乗せ0）</span>
+          <span><i class="ring"></i>堀内さんのライン</span>
+          <span><i class="sw" style="border-color:var(--moss)"></i>試しの年収で組める範囲</span>
+        </div>
+        <table class="resid" id="resid"></table>
+        <p class="resid-note">残差は、堀内さんのラインの前提（他社返済なし・頭金なし・60回）でモデルを計算して比べています。</p>
+      </section>
+
+      <section class="panel chart">
+        <h2>2. k を動かしたときの必要年収</h2>
+        <p class="desc">必要年収は k に反比例して増えます。プランごとの曲線が赤い横線（堀内さんのライン）と交わる点が、そのプランを合わせる k です。</p>
+        <div class="plot" id="c2"></div>
+        <div class="legend">
+          <span><i class="sw" style="border-color:var(--ink)"></i>満額</span>
+          <span><i class="sw" style="border-color:#5A6B8C"></i>MPA/VPA</span>
+          <span><i class="sw" style="border-color:#A3ACBC"></i>MPC/VPC</span>
+          <span><i class="sw dash" style="border-color:var(--shu)"></i>堀内さんのライン</span>
+        </div>
+      </section>
+
+      <section class="panel chart">
+        <h2>3. 必要年収の内訳</h2>
+        <p class="desc">3層の積み上げで見ると、プラン間の差は一番上の「自社返済 ÷ k」の層にしか出ないことがわかります。</p>
+        <div class="plot" id="c3"></div>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--c-live)"></i>生活維持費 L</span>
+          <span><i class="dot" style="background:var(--c-other)"></i>他社返済 12αM</span>
+          <span><i class="dot" style="background:var(--c-own)"></i>自社返済 A ÷ k</span>
+          <span><i class="sw" style="border-color:var(--shu)"></i>堀内さんのライン</span>
+        </div>
+      </section>
+
+      <section class="panel chart">
+        <h2>4. 世帯・住宅ごとの必要年収</h2>
+        <p class="desc">いまの係数・他社返済・回数・頭金のまま、世帯と住宅だけを変えた一覧です。反転している行が、左で選んでいる条件です。</p>
+        <div class="plot"><table class="gridtbl" id="gridtbl"></table></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ───────── 定数 ─────────
+  const LIV = { with: [1160000, 1770000, 2090000, 2400000], none: [900000, 1360000, 1610000, 1850000] };
+  const PLAN = ['満額', 'MPA/VPA', 'MPC/VPC'];
+  const PLAN_COLOR = ['#16213A', '#5A6B8C', '#A3ACBC'];
+  const SHEET = { k: 0.9, alpha: 1.3, add: 0 };  // 旧設定（比較用の破線）
+  const P = {
+    k: 0.405, alpha: 1.3, beta: 0.2, h: 1, s: 'with', add: 0, M: 0, Y: 1500000,
+    n: 60, D: 0, rate: 8,
+    prices: [902000, 792000, 492800], targets: [1700000, 1610000, 1450000], focus: 0
+  };
+
+  const $ = id => document.getElementById(id);
+  const man = (v, d = 1) => (v / 10000).toLocaleString('ja-JP', { minimumFractionDigits: d, maximumFractionDigits: d }) + '万';
+  const yen = v => Math.round(v).toLocaleString('ja-JP');
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const sman = (d, dig = 1) => { const r = Math.round(d / (10000 / 10 ** dig)); return r === 0 ? '±' + man(0, dig) : (r > 0 ? '+' : '−') + man(Math.abs(d), dig); };
+
+  // ───────── モデル ─────────
+  // 自社ローンの年間支払額 A（PAYMENT PLANNERと同じ丸め）
+  function annual(price, D, n, ratePct) {
+    const pr = price - D;
+    if (pr <= 0) return 0;
+    const r = ratePct / 100 / 12;
+    const exact = r === 0 ? pr / n : pr * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+    const m = Math.floor(exact / 100) * 100;
+    if (n >= 12) return m * 12;
+    const first = Math.ceil((exact * n - m * (n - 1)) / 100) * 100;
+    return first + m * (n - 1);
+  }
+  const Lof = p => LIV[p.s][p.h - 1] + p.add;
+  const baseOf = p => Lof(p) + 12 * p.alpha * p.M;
+  // 返済比率の足切り：（他社の年間返済＋自社の年間支払額）÷ 年収 ≦ β
+  const dtiTerm = (p, A) => (12 * p.M + A) / p.beta;
+  function ystar(p, price) {
+    const A = annual(price, p.D, p.n, p.rate);
+    return Math.max(baseOf(p) + A / p.k, dtiTerm(p, A));
+  }
+  // 年収Yで組める元金の上限（二分探索）
+  function maxPrice(p, Y) {
+    if (ystar(p, p.D) > Y) return null;
+    let lo = p.D, hi = 20000000;
+    if (ystar(p, hi) <= Y) return hi;
+    for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; if (ystar(p, mid) <= Y) lo = mid; else hi = mid; }
+    return lo;
+  }
+  // 堀内さんのラインの前提（他社返済なし・頭金なし・60回）
+  const horiuchiCond = p => ({ ...p, M: 0, D: 0, n: 60 });
+
+  function fitK1D(p) {
+    const q = horiuchiCond(p), L0 = baseOf(q);
+    const A = p.prices.map(x => annual(x, 0, 60, p.rate));
+    const num = A.reduce((s, a, i) => s + a * (p.targets[i] - L0), 0);
+    const den = A.reduce((s, a) => s + a * a, 0);
+    if (num <= 0 || den === 0) return null;
+    return den / num; // k = 1/u
+  }
+  function fitLK2D(p) {
+    const A = p.prices.map(x => annual(x, 0, 60, p.rate)), T = p.targets, n = A.length;
+    const ma = A.reduce((s, a) => s + a, 0) / n, mt = T.reduce((s, t) => s + t, 0) / n;
+    const sxy = A.reduce((s, a, i) => s + (a - ma) * (T[i] - mt), 0), sxx = A.reduce((s, a) => s + (a - ma) ** 2, 0);
+    if (sxx === 0 || sxy <= 0) return null;
+    const u = sxy / sxx;
+    return { L: mt - u * ma, k: 1 / u };
+  }
+
+  // ───────── SVGヘルパー ─────────
+  function niceTicks(min, max, count) {
+    const span = max - min || 1, step0 = span / count, mag = Math.pow(10, Math.floor(Math.log10(step0)));
+    const norm = step0 / mag, step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+    const out = []; for (let v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) out.push(+v.toFixed(10));
+    return out;
+  }
+  const scale = (d0, d1, r0, r1) => v => r0 + (v - d0) / (d1 - d0) * (r1 - r0);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const path = pts => pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('');
+  function frame(W, H, m, xt, yt, sx, sy, xfmt, yfmt, xlab, ylab) {
+    let s = '';
+    yt.forEach(v => { const y = sy(v); s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}" stroke="#E8ECF1"/><text x="${m.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#667085">${yfmt(v)}</text>`; });
+    xt.forEach(v => { const x = sx(v); s += `<line x1="${x}" x2="${x}" y1="${m.t}" y2="${H - m.b}" stroke="#F1F3F6"/><text x="${x}" y="${H - m.b + 16}" text-anchor="middle" font-size="11" fill="#667085">${xfmt(v)}</text>`; });
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="#3C4659"/>`;
+    s += `<text x="${W - m.r}" y="${H - 6}" text-anchor="end" font-size="12" fill="#3C4659">${xlab}</text>`;
+    s += `<text x="0" y="${m.t - 14}" text-anchor="start" font-size="12" fill="#3C4659">${ylab}</text>`;
+    return s;
+  }
+  const svgOpen = (W, H, label) => `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">`;
+
+  // ───────── グラフ1：元金 × 必要年収 ─────────
+  function chart1() {
+    const el = $('c1'), W = Math.max(320, el.clientWidth), H = Math.round(clamp(W * 0.56, 300, 440));
+    const m = { l: 56, r: 24, t: 30, b: 40 };
+    const xmax = Math.ceil(Math.max(...P.prices) * 1.15 / 100000) * 100000;
+    const xs = Array.from({ length: 181 }, (_, i) => xmax * i / 180);
+    const ghostP = { ...P, ...SHEET };
+    const cur = xs.map(x => ystar(P, x)), gh = xs.map(x => ystar(ghostP, x));
+    const pts = P.prices.map(x => ystar(P, x));
+    const lo = Math.min(cur[0], gh[0], P.Y, ...P.targets), hi = Math.max(cur.at(-1), gh.at(-1), P.Y, ...P.targets, ...pts);
+    const ymin = Math.max(0, Math.floor((lo - 150000) / 100000) * 100000), ymax = Math.ceil(hi * 1.06 / 100000) * 100000;
+    const sx = scale(0, xmax, m.l, W - m.r), sy = scale(ymin, ymax, H - m.b, m.t);
+    const cy = v => clamp(sy(v), m.t - 4, H - m.b);
+    let s = svgOpen(W, H, '元金ごとの必要年収');
+    s += frame(W, H, m, niceTicks(0, xmax, W < 520 ? 4 : 6), niceTicks(ymin, ymax, 6), sx, sy, v => (v / 10000) + '万', v => (v / 10000) + '万', '元金（円）', '必要年収（円）');
+
+    // 試しの年収：組める範囲
+    const mp = maxPrice(P, P.Y);
+    const yY = sy(P.Y);
+    if (mp !== null) {
+      const xr = sx(Math.min(mp, xmax));
+      s += `<rect x="${m.l}" y="${yY}" width="${Math.max(0, xr - m.l)}" height="${H - m.b - yY}" fill="#1D7050" opacity=".07"/>`;
+      s += `<line x1="${xr}" x2="${xr}" y1="${yY}" y2="${H - m.b}" stroke="#1D7050" stroke-dasharray="3 3"/>`;
+    }
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${yY}" y2="${yY}" stroke="#1D7050" stroke-width="1.5"/>`;
+    const narrow = W < 520;
+    const yLab = mp === null ? `年収${man(P.Y, 0)}では組めない` : mp >= xmax ? (narrow ? `年収${man(P.Y, 0)}：全範囲OK` : `年収${man(P.Y, 0)}なら表示範囲すべて組める`) : (narrow ? `年収${man(P.Y, 0)}：元金${man(mp, 0)}まで` : `年収${man(P.Y, 0)}なら元金 約${man(mp, 1)}円まで`);
+    s += `<text x="${m.l + 6}" y="${yY - 6}" font-size="12" fill="#1D7050" font-weight="700">${yLab}</text>`;
+
+    // 線
+    s += `<path d="${path(xs.map((x, i) => [sx(x), cy(gh[i])]))}" fill="none" stroke="#A3ACBC" stroke-width="2" stroke-dasharray="6 5"/>`;
+    s += `<path d="${path(xs.map((x, i) => [sx(x), cy(cur[i])]))}" fill="none" stroke="#16213A" stroke-width="2.5"/>`;
+
+    // プランの点と堀内さんのライン
+    P.prices.forEach((x, i) => {
+      const px = sx(x), py = sy(pts[i]), ty = sy(P.targets[i]);
+      s += `<line x1="${px}" x2="${px}" y1="${Math.min(py, ty)}" y2="${Math.max(py, ty)}" stroke="#C23A1E" stroke-width="1.5" stroke-dasharray="2 3"/>`;
+      s += `<circle cx="${px}" cy="${ty}" r="7" fill="#fff" stroke="#C23A1E" stroke-width="2.5"/>`;
+      s += `<circle cx="${px}" cy="${py}" r="4.5" fill="#16213A"/>`;
+      const topY = Math.min(py, ty) - 12;
+      s += `<text x="${px}" y="${topY}" text-anchor="middle" font-size="12" font-weight="700" fill="#16213A">${PLAN[i]}</text>`;
+      const diff = pts[i] - P.targets[i];
+      s += `<text x="${px + 10}" y="${(py + ty) / 2 + 4}" font-size="11" fill="${diff >= 0 ? '#C23A1E' : '#2B4C8C'}">${sman(diff)}</text>`;
+    });
+    s += '</svg>';
+    el.innerHTML = s;
+
+    // 残差表
+    const q = horiuchiCond(P);
+    const rows = P.prices.map((x, i) => { const mv = ystar(q, x); return { mv, t: P.targets[i], d: mv - P.targets[i] }; });
+    const rmse = Math.sqrt(rows.reduce((a, r) => a + r.d * r.d, 0) / rows.length);
+    $('resid').innerHTML = `<thead><tr><th>プラン</th><th>年間支払額 A</th><th>モデル</th><th>堀内さん</th><th>差</th></tr></thead><tbody>`
+      + rows.map((r, i) => `<tr><td>${PLAN[i]}</td><td>${yen(annual(P.prices[i], 0, 60, P.rate))}</td><td>${man(r.mv)}</td><td>${man(r.t)}</td><td class="${Math.abs(r.d) < 500 ? '' : r.d > 0 ? 'pos' : 'neg'}">${sman(r.d)}</td></tr>`).join('')
+      + `<tr><td>平均的なずれ（RMSE）</td><td></td><td></td><td></td><td>${man(rmse)}</td></tr></tbody>`;
+  }
+
+  // ───────── グラフ2：k × 必要年収 ─────────
+  function chart2() {
+    const el = $('c2'), W = Math.max(320, el.clientWidth), H = Math.round(clamp(W * 0.46, 260, 360));
+    const m = { l: 56, r: 24, t: 30, b: 40 };
+    const k0 = 0.2, k1 = 1.0;
+    const ks = Array.from({ length: 161 }, (_, i) => k0 + (k1 - k0) * i / 160);
+    const curves = P.prices.map(x => ks.map(k => ystar({ ...P, k }, x)));
+    const floorV = Math.min(...curves.map(c => c.at(-1)));
+    const ymin = Math.max(0, Math.floor((Math.min(floorV, ...P.targets) - 150000) / 100000) * 100000);
+    const ymax = Math.ceil(Math.max(...P.targets, ...P.prices.map(x => ystar(P, x))) * 1.3 / 100000) * 100000;
+    const sx = scale(k0, k1, m.l, W - m.r), sy = scale(ymin, ymax, H - m.b, m.t);
+    let s = svgOpen(W, H, 'kごとの必要年収');
+    s += `<defs><clipPath id="clip2"><rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}"/></clipPath></defs>`;
+    s += frame(W, H, m, niceTicks(k0, k1, 8), niceTicks(ymin, ymax, 5), sx, sy, v => v.toFixed(1), v => (v / 10000) + '万', 'k', '必要年収（円）');
+
+    const base = baseOf(P);
+    P.targets.forEach((t, i) => {
+      const y = sy(t);
+      s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}" stroke="#C23A1E" stroke-width="1.2" stroke-dasharray="5 4" opacity="${i === P.focus ? 1 : .55}"/>`;
+    });
+    s += `<g clip-path="url(#clip2)">` + curves.map((c, i) => `<path d="${path(ks.map((k, j) => [sx(k), sy(c[j])]))}" fill="none" stroke="${PLAN_COLOR[i]}" stroke-width="${i === P.focus ? 3 : 2}"/>`).join('') + `</g>`;
+
+    // 交点
+    P.prices.forEach((x, i) => {
+      const A = annual(x, P.D, P.n, P.rate), t = P.targets[i];
+      if (t <= base || A === 0) return;
+      const kk = A / (t - base);
+      if (kk < k0 || kk > k1) return;
+      const cx = sx(kk), cyy = sy(t);
+      s += `<circle cx="${cx}" cy="${cyy}" r="6" fill="#fff" stroke="#C23A1E" stroke-width="2.5"/>`;
+      s += `<text x="${cx + 9}" y="${i === 0 ? cyy - 8 : cyy + 16}" font-size="11" fill="#C23A1E" font-weight="700">${PLAN[i]} k=${kk.toFixed(2)}</text>`;
+    });
+
+    // いまのk
+    const xk = sx(P.k);
+    s += `<line x1="${xk}" x2="${xk}" y1="${m.t}" y2="${H - m.b}" stroke="#16213A" stroke-width="1.5"/>`;
+    s += `<rect x="${xk - 30}" y="${m.t - 22}" width="60" height="18" rx="3" fill="#16213A"/><text x="${xk}" y="${m.t - 9}" text-anchor="middle" font-size="11" fill="#fff">いま ${P.k.toFixed(2)}</text>`;
+    s += '</svg>';
+    el.innerHTML = s;
+  }
+
+  // ───────── グラフ3：内訳 ─────────
+  function chart3() {
+    const el = $('c3'), W = Math.max(320, el.clientWidth);
+    const rowH = 46, m = { l: W < 520 ? 70 : 84, r: 90, t: 14, b: 34 };
+    const H = m.t + m.b + rowH * 3;
+    const L = Lof(P), O = 12 * P.alpha * P.M;
+    const rows = P.prices.map((x, i) => { const A = annual(x, P.D, P.n, P.rate); return { L, O, Ak: A / P.k, tot: ystar(P, x), t: P.targets[i] }; });
+    const xmax = Math.ceil(Math.max(...rows.map(r => Math.max(r.L + r.O + r.Ak, r.tot, r.t))) * 1.05 / 100000) * 100000;
+    const sx = scale(0, xmax, m.l, W - m.r);
+    let s = svgOpen(W, H, '必要年収の内訳');
+    niceTicks(0, xmax, W < 520 ? 4 : 6).forEach(v => { const x = sx(v); s += `<line x1="${x}" x2="${x}" y1="${m.t}" y2="${H - m.b}" stroke="#EEF1F4"/><text x="${x}" y="${H - m.b + 16}" text-anchor="middle" font-size="11" fill="#667085">${v / 10000}万</text>`; });
+    rows.forEach((r, i) => {
+      const y = m.t + i * rowH + 8, h = rowH - 18;
+      let x = m.l;
+      const seg = (w, c) => { const ww = sx(w) - sx(0); if (ww > 0) s += `<rect x="${x}" y="${y}" width="${ww}" height="${h}" fill="${c}"/>`; x += Math.max(0, ww); };
+      seg(Math.max(0, r.L), '#7E8BA6'); seg(r.O, '#B7791F'); seg(r.Ak, '#16213A');
+      if (r.Ak > 0 && sx(r.Ak) - sx(0) > 56) s += `<text x="${x - 6}" y="${y + h / 2 + 4}" text-anchor="end" font-size="11" fill="#fff">${man(r.Ak)}</text>`;
+      s += `<text x="${m.l - 10}" y="${y + h / 2 + 4}" text-anchor="end" font-size="12" font-weight="700" fill="#16213A">${PLAN[i]}</text>`;
+      s += `<text x="${Math.max(x, sx(r.tot)) + 8}" y="${y + h / 2 + 4}" font-size="13" font-weight="700" fill="#16213A">${man(r.tot)}</text>`;
+      const tx = sx(r.t);
+      s += `<line x1="${tx}" x2="${tx}" y1="${y - 5}" y2="${y + h + 5}" stroke="#C23A1E" stroke-width="2.5"/>`;
+    });
+    s += '</svg>';
+    el.innerHTML = s;
+  }
+
+  // ───────── 表：世帯×住宅 ─────────
+  function table() {
+    let h = `<thead><tr><th>世帯・住宅</th>${PLAN.map(p => `<th>${p}</th>`).join('')}</tr></thead><tbody>`;
+    ['with', 'none'].forEach(sv => [1, 2, 3, 4].forEach(hv => {
+      const q = { ...P, h: hv, s: sv };
+      const on = hv === P.h && sv === P.s;
+      h += `<tr class="${on ? 'on' : ''}"><td>${hv === 4 ? '4人以上' : hv + '人'}・${sv === 'with' ? '住宅あり' : '持ち家'}</td>`
+        + P.prices.map(x => `<td>${man(ystar(q, x))}</td>`).join('') + '</tr>';
+    }));
+    $('gridtbl').innerHTML = h + '</tbody>';
+  }
+
+  // ───────── 式 ─────────
+  function equation() {
+    const i = P.focus, x = P.prices[i];
+    const A = annual(x, P.D, P.n, P.rate), L = Lof(P), O = 12 * P.alpha * P.M, own = A / P.k;
+    const tot = ystar(P, x), dti = dtiTerm(P, A);
+    $('eTotal').textContent = man(tot);
+    $('eL').textContent = man(L);
+    $('eO').textContent = man(O);
+    $('eA').textContent = man(own);
+    $('eOtherSym').textContent = `12 × ${P.alpha.toFixed(2)} × ${yen(P.M)}`;
+    $('eOwnSym').textContent = `${yen(A)} ÷ ${P.k.toFixed(2)}`;
+    $('eqCond').textContent = `${PLAN[i]} 元金${yen(x)}円・頭金${yen(P.D)}円・${P.n}回・年率${P.rate.toFixed(1)}%／${P.h === 4 ? '4人以上' : P.h + '人'}・${P.s === 'with' ? '住宅あり' : '持ち家'}`;
+    const t = P.targets[i], d = tot - t;
+    let note = `堀内さんのライン ${man(t)} との差は <b>${sman(d)}</b>。元金を1万円増やすと、必要年収は約${yen((annual(x + 100000, P.D, P.n, P.rate) - A) / 10 / P.k)}円増えます。`;
+    if (dti > L + O + own) note = `返済比率の足切り（（12M＋A）÷ β ＝ ${man(dti)}）の方が大きいため、必要年収はこちらで決まっています。` + note;
+    $('eqNote').innerHTML = note;
+    document.querySelectorAll('#focusTabs button').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.i) === i));
+  }
+
+  // ───────── フィット情報 ─────────
+  function fitInfo() {
+    const k1 = fitK1D(P), f2 = fitLK2D(P);
+    const L0 = baseOf(horiuchiCond(P));
+    let t = k1 ? `L＝${man(L0)}のままなら、最小二乗で k＝${k1.toFixed(3)}。` : 'いまの L では堀内さんのラインに合わせられません。';
+    if (f2) t += `<br>L も自由にすると L＝${man(f2.L)}・k＝${f2.k.toFixed(3)}（割販法の単身・住宅ありは116.0万）。`;
+    $('fitInfo').innerHTML = t;
+  }
+
+  // ───────── 入力の同期 ─────────
+  const FMT = {
+    k: v => v.toFixed(2), alpha: v => v.toFixed(2), beta: v => Math.round(v * 100) + '%',
+    add: v => (v > 0 ? '+' : v < 0 ? '−' : '±') + man(Math.abs(v), 0), M: v => yen(v) + '円',
+    Y: v => man(v, 0) + '円', D: v => yen(v) + '円', rate: v => v.toFixed(1) + '%'
+  };
+  function syncInputs() {
+    document.querySelectorAll('input[type=range][data-key]').forEach(inp => { inp.value = P[inp.dataset.key]; });
+    document.querySelectorAll('output[data-out]').forEach(o => { o.textContent = FMT[o.dataset.out](P[o.dataset.out]); });
+    $('n').value = String(P.n);
+    document.querySelectorAll('[data-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(P[g.dataset.seg]) === b.dataset.v)));
+    document.querySelectorAll('input[data-arr]').forEach(inp => {
+      if (document.activeElement === inp) return;
+      const v = P[inp.dataset.arr][+inp.dataset.i] / Number(inp.dataset.scale);
+      inp.value = inp.dataset.scale === '1' ? yen(v) : String(+v.toFixed(1));
+    });
+  }
+
+  function render() {
+    syncInputs(); equation(); chart1(); chart2(); chart3(); table(); fitInfo();
+  }
+
+  document.querySelectorAll('input[type=range][data-key]').forEach(inp => inp.addEventListener('input', () => { P[inp.dataset.key] = Number(inp.value); render(); }));
+  const nSel = $('n');
+  for (let i = 3; i <= 60; i += 3) { const o = document.createElement('option'); o.value = i; o.textContent = `${i}回` + (i % 12 === 0 ? `（${i / 12}年）` : ''); nSel.appendChild(o); }
+  nSel.addEventListener('change', () => { P.n = Number(nSel.value); render(); });
+  document.querySelectorAll('[data-seg]').forEach(g => g.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    P[g.dataset.seg] = g.dataset.seg === 'h' ? Number(b.dataset.v) : b.dataset.v; render();
+  })));
+  document.querySelectorAll('input[data-arr]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const raw = inp.value.replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^\d.]/g, '');
+      const v = Number(raw);
+      if (raw !== '' && Number.isFinite(v) && v > 0) { P[inp.dataset.arr][+inp.dataset.i] = v * Number(inp.dataset.scale); render(); }
+    });
+    inp.addEventListener('blur', () => syncInputs());
+  });
+  $('focusTabs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { P.focus = Number(b.dataset.i); render(); }));
+  $('fitK').addEventListener('click', () => {
+    const k = fitK1D(P);
+    if (k) { P.k = clamp(Math.round(k * 100) / 100, 0.2, 1); render(); }
+  });
+  $('resetSheet').addEventListener('click', () => { Object.assign(P, SHEET, { beta: 0.2 }); render(); });
+
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 120); });
+  render();
+  window.__model = { P, ystar, annual, fitK1D, fitLK2D, render };
+})();
+</script>
+</body>
+</html>

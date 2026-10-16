@@ -1,12 +1,33 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/apply", "destination": "/kokyaku-intake.html" },
-    { "source": "/issue", "destination": "/anken-hakko.html" },
-    { "source": "/check", "destination": "/eigyo-kakunin.html" },
-    { "source": "/manual", "destination": "/manual-fs.html" },
-    { "source": "/manual-rm", "destination": "/manual-rm.html" },
-    { "source": "/rm", "destination": "/jisha-loan-scoring.html" },
-    { "source": "/model", "destination": "/min-income-model.html" }
+    {
+      "source": "/apply",
+      "destination": "/form.html"
+    },
+    {
+      "source": "/issue",
+      "destination": "/issue.html"
+    },
+    {
+      "source": "/result",
+      "destination": "/result.html"
+    },
+    {
+      "source": "/guide",
+      "destination": "/guide.html"
+    },
+    {
+      "source": "/guide-rm",
+      "destination": "/guide-rm.html"
+    },
+    {
+      "source": "/check",
+      "destination": "/check.html"
+    },
+    {
+      "source": "/model",
+      "destination": "/model.html"
+    }
   ]
 }

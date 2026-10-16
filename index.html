@@ -1,294 +1,37 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>自社割賦スコアリング</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<title>お手続きのご案内</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <style>
 :root{
-  --bg:#EEF0F4; --paper:#FFFFFF; --ink:#16213A; --ink-2:#3C4659; --sub:#6B7484;
-  --rule:#D7DCE4; --rule-soft:#EAEDF2; --focus:#2B4C8C;
-  --ng:#C23A1E; --ng-bg:#FBEDEA; --ok:#1D7050; --ok-bg:#E7F3EC; --warn:#9A6212; --warn-bg:#FBF2E1;
-  --r:8px;
+  --bg:#F6F7F9; --surface:#FFFFFF; --fg:#1A1F28; --muted:#626C7A; --rule:#DCE1E8; --navy:#16213A;
+  color-scheme:light;
 }
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:"BIZ UDPGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;
-  font-size:16px;line-height:1.6;font-variant-numeric:tabular-nums;padding-bottom:env(safe-area-inset-bottom)}
-.wrap{max-width:560px;margin:0 auto;padding:20px 16px 40px}
-h1{font-size:20px;margin:0 0 2px}
-.sub{font-size:13px;color:var(--sub);margin:0 0 16px}
-button,select,input{font:inherit}
-:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-
-/* ── 判定 ── */
-.result{position:sticky;top:0;z-index:5;margin:0 -16px 18px;padding:16px;background:var(--bg);
-  border-bottom:1px solid var(--rule)}
-.card{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r)}
-.vbox{padding:18px 18px 16px;text-align:center;border-radius:var(--r);border:2px solid var(--rule);background:var(--paper);transition:border-color .2s}
-.vbox[data-s="ok"]{border-color:var(--ok);background:var(--ok-bg)}
-.vbox[data-s="ng"]{border-color:var(--ng);background:var(--ng-bg)}
-.vbox .mark{font-size:44px;line-height:1;font-weight:700;letter-spacing:.08em}
-.vbox[data-s="idle"] .mark{font-size:20px;opacity:.5}
-.vbox[data-s="ok"] .mark{color:var(--ok)} .vbox[data-s="ng"] .mark{color:var(--ng)} .vbox[data-s="idle"] .mark{color:#B6BDC8}
-.vbox .v{font-size:22px;font-weight:700;margin:6px 0 0;line-height:1.35}
-.vbox .why{font-size:14px;margin:6px 0 0;line-height:1.55;color:var(--ink-2)}
-.vbox[data-s="ng"] .why{color:var(--ng)}
-
-/* ── 入力 ── */
-.sec{margin-bottom:14px;padding:16px 18px}
-.sec h2{font-size:14px;margin:0 0 10px;color:var(--ink-2)}
-.row{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:6px 12px;align-items:center;padding:6px 0}
-@media (max-width:420px){.row{grid-template-columns:1fr}}
-.row label,.row .lab{font-size:14px;color:var(--ink-2)}
-.ib{display:flex;align-items:center;border:1px solid var(--rule);border-radius:6px;background:#FAFBFC;padding:0 12px}
-.ib:focus-within{border-color:var(--focus);background:#fff}
-.ib.bad{border-color:var(--ng);background:var(--ng-bg)}
-.ib input{flex:1;min-width:0;border:none;background:transparent;text-align:right;padding:10px 0;font-size:19px;color:var(--ink)}
-.ib input:focus-visible{outline:none}
-.ib i{font-style:normal;font-size:13px;color:var(--sub);margin-left:8px}
-.sel{width:100%;padding:10px;border:1px solid var(--rule);border-radius:6px;background:#FAFBFC;color:var(--ink);font-size:16px}
-.seg{display:flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:#FAFBFC}
-.seg button{flex:1;border:none;border-right:1px solid var(--rule);background:transparent;color:var(--ink-2);padding:10px 4px;font-size:14px;cursor:pointer}
-.seg button:last-child{border-right:none}
-.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
-.plans{grid-column:2;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-@media (max-width:420px){.plans{grid-column:1}}
-.plan{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--rule);background:#fff;color:var(--ink-2);cursor:pointer}
-.plan[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-.hint{grid-column:2;font-size:12px;color:var(--sub);line-height:1.5}
-@media (max-width:420px){.hint{grid-column:1}}
-
-/* ── 他社借入 ── */
-.debts{display:flex;flex-direction:column;gap:8px}
-.debt{border:1px solid var(--rule);border-radius:6px;padding:10px 12px;background:#FCFCFD}
-.debt .head{display:flex;gap:8px;align-items:center}
-.debt .head select{flex:1;min-width:0;font-size:14px;padding:8px}
-.debt .del{border:none;background:none;color:var(--sub);font-size:12px;text-decoration:underline;cursor:pointer;padding:6px 4px}
-.debt .del:hover{color:var(--ng)}
-.debt .f{margin-top:8px}
-.debt .f>div{min-width:0}
-.debt .f .ib input{width:100%;min-width:0}
-.debt .f label{display:block;font-size:11px;color:var(--sub)}
-.debt .f .ib{padding:0 8px} .debt .f .ib input{font-size:16px;padding:7px 0}
-.caution{font-size:12px;line-height:1.55;color:var(--warn);background:var(--warn-bg);border-radius:6px;padding:8px 10px;margin:0 0 10px}
-.empty{padding:12px;border:1px solid var(--rule-soft);border-radius:6px;background:#FAFBFC;color:var(--sub);font-size:14px;text-align:center}
-.add{width:100%;margin-top:8px;padding:11px;border:1px dashed var(--ink-2);border-radius:6px;background:transparent;color:var(--ink);font-size:15px;cursor:pointer}
-.add:hover{background:#FAFBFC}
-.sum{display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--rule-soft);font-size:13px;color:var(--ink-2)}
-.sum b{font-size:15px;color:var(--ink)}
-
-.foot{font-size:12px;color:var(--sub);margin:14px 2px 0;line-height:1.6}
-.foot a{color:var(--focus)}
-.reset{display:block;margin:16px auto 0;padding:9px 18px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink-2);font-size:13px;cursor:pointer}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151B; --surface:#182029; --fg:#E8ECF2; --muted:#98A3B2; --rule:#2A3340; --navy:#A9BEDD;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#11151B; --surface:#182029; --fg:#E8ECF2; --muted:#98A3B2; --rule:#2A3340; --navy:#A9BEDD;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);margin:0;
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  line-height:1.8;display:flex;align-items:center;justify-content:center;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:40px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;
+  max-width:460px;width:100%;padding:34px 28px;display:flex;flex-direction:column;gap:14px}
+.mark{font-size:12px;letter-spacing:.2em;color:var(--muted);font-weight:700}
+h1{font-size:21px;margin:0;line-height:1.5;color:var(--fg)}
+p{margin:0;font-size:14.5px;color:var(--muted)}
+.rule{height:1px;background:var(--rule);margin:6px 0 2px}
+.note{font-size:13px;color:var(--muted)}
 </style>
-</head>
-<body>
-<div class="wrap">
-  <h1>自社割賦スコアリング</h1>
-  <p class="sub">ヒアリングした内容を入れると、その場で判定が出ます。</p>
 
-  <div class="result">
-    <div class="vbox" id="vbox" data-s="idle" aria-live="polite">
-      <div class="mark" id="mark">―</div>
-      <p class="v" id="verdict">年収を入れてください</p>
-      <p class="why" id="why">商品・年収・世帯を入れてください</p>
-    </div>
-  </div>
-
-  <section class="card sec">
-    <h2>商品</h2>
-    <div class="row">
-      <label for="price">商品金額</label>
-      <div class="ib"><input id="price" inputmode="numeric" autocomplete="off"><i>円</i></div>
-      <div class="plans" role="group" aria-label="プラン">
-        <button type="button" class="plan" data-price="902000">MP / VP</button>
-        <button type="button" class="plan" data-price="792000">MPA / VPA</button>
-        <button type="button" class="plan" data-price="492800">MPC / VPC</button>
-      </div>
-    </div>
-    <div class="row">
-      <label for="down">頭金</label>
-      <div class="ib" id="downBox"><input id="down" inputmode="numeric" autocomplete="off"><i>円</i></div>
-      <div class="hint" id="downHint">なければ0円のまま</div>
-    </div>
-    <div class="row">
-      <label for="times">支払回数</label>
-      <select class="sel" id="times"></select>
-    </div>
-  </section>
-
-  <section class="card sec">
-    <h2>お客さま</h2>
-    <div class="row">
-      <label for="income">税込年収</label>
-      <div class="ib"><input id="income" inputmode="numeric" autocomplete="off"><i>円</i></div>
-      <div class="hint" id="incHint">源泉徴収票・給与明細の税込額</div>
-    </div>
-    <div class="row">
-      <span class="lab" id="hl">世帯人数<small style="display:block;font-size:11px;color:var(--sub);line-height:1.4">本人を含む</small></span>
-      <div class="seg" role="group" aria-labelledby="hl" id="hh">
-        <button type="button" data-v="1">1人</button><button type="button" data-v="2">2人</button><button type="button" data-v="3">3人</button><button type="button" data-v="4">4人+</button>
-      </div>
-    </div>
-    <div class="row">
-      <span class="lab" id="sl">住まい</span>
-      <div class="seg" role="group" aria-labelledby="sl" id="hc">
-        <button type="button" data-v="with">賃貸・住宅ローン</button><button type="button" data-v="none">持ち家</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="card sec">
-    <h2>他社からの借入</h2>
-    <p class="caution">返済内容により審査結果が異なるため、該当する返済内容を正確に選択してください。</p>
-    <div class="debts" id="debts"></div>
-    <button type="button" class="add" id="addDebt">＋ 借入を追加</button>
-    <div class="sum"><span>合計 <b id="cnt">0件</b></span><span>毎月 <b id="mon">0円</b></span></div>
-  </section>
-
-  <button type="button" class="reset" id="reset">入力をリセット</button>
-
-  <p class="foot">住宅ローンは「住まい」で見ているため、他社借入には入れません。この画面は支払余力と負債の確認だけです。</p>
+<div class="card">
+  <span class="mark">APRA</span>
+  <h1>お手続きのご案内</h1>
+  <p>ご入力は、ご担当者からお送りするURLからお進みください。このページからはお手続きいただけません。</p>
+  <div class="rule"></div>
+  <p class="note">URLをお持ちでない場合、またはURLの期限が切れてしまった場合は、お手数ですがご担当者までご連絡ください。あらためてお送りします。</p>
 </div>
-
-<script>
-(() => {
-  const LIVING = { with: [1160000, 1770000, 2090000, 2400000], none: [900000, 1360000, 1610000, 1850000] };
-  const OTHER_MULT = 1.3, SCORE_MULT = 0.405, COUNT_CUT = 3, DTI_CUT = 0.20, RATE = 0.08;
-  const TYPES = [
-    { k: 'sarakin', n: '消費者金融', r: 18 }, { k: 'bankcard', n: '銀行カードローン', r: 14.5 },
-    { k: 'revo', n: 'クレジットカード（リボ・キャッシング）', r: 18 }, { k: 'bunkatsu', n: 'カード分割・ショッピングローン', r: 15 },
-    { k: 'carbank', n: '自動車ローン（銀行・信金・JA）', r: 2.5 }, { k: 'cardealer', n: '自動車ローン（ディーラー・信販）', r: 6 },
-    { k: 'edu', n: '教育ローン', r: 3 }, { k: 'phone', n: 'スマホ端末の分割', r: 0 }, { k: 'other', n: 'その他・不明', r: 15 }
-  ];
-  const DEF = { price: 902000, down: 0, times: 60, income: 0, hh: 1, hc: 'with' };
-
-  const $ = id => document.getElementById(id);
-  const yen = v => (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString('ja-JP');
-  const man = v => { const x = v / 10000; return (Number.isInteger(x) ? x.toLocaleString('ja-JP') : x.toLocaleString('ja-JP', { maximumFractionDigits: 1 })) + '万円'; };
-  const half = s => String(s).replace(/[０-９．，]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
-  const parse = s => { const t = half(s).replace(/[,\s円%]/g, ''); if (t === '') return null; const v = Number(t); return Number.isFinite(v) ? v : null; };
-
-  function liveComma(el) {
-    el.addEventListener('input', () => {
-      const raw = half(el.value), caret = el.selectionStart ?? raw.length;
-      const before = raw.slice(0, caret).replace(/\D/g, '').length;
-      const all = raw.replace(/\D/g, ''), digits = all.replace(/^0+(?=\d)/, '');
-      const out = digits ? Number(digits).toLocaleString('ja-JP') : '';
-      el.value = out;
-      let pos = 0, seen = 0, target = Math.max(0, before - (all.length - digits.length));
-      while (pos < out.length && seen < target) { if (/\d/.test(out[pos])) seen++; pos++; }
-      if (document.activeElement === el) el.setSelectionRange(pos, pos);
-      render();
-    });
-  }
-
-  const state = { hh: 1, hc: 'with', debts: [] };
-  let seq = 0;
-
-  const sel = $('times');
-  for (let i = 3; i <= 60; i += 3) { const o = document.createElement('option'); o.value = i; o.textContent = `${i}回` + (i % 12 === 0 ? `（${i / 12}年）` : ''); sel.appendChild(o); }
-  sel.addEventListener('change', render);
-  ['price', 'down', 'income'].forEach(id => liveComma($(id)));
-  document.querySelectorAll('.plan').forEach(b => b.addEventListener('click', () => { $('price').value = Number(b.dataset.price).toLocaleString('ja-JP'); render(); }));
-  [['hh', 'hh', Number], ['hc', 'hc', String]].forEach(([id, key, cast]) =>
-    $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => { state[key] = cast(b.dataset.v); render(); })));
-
-  function buildDebts() {
-    const box = $('debts');
-    box.innerHTML = state.debts.length ? '' : '<p class="empty">借入なし</p>';
-    state.debts.forEach((d, i) => {
-      const row = document.createElement('div');
-      row.className = 'debt';
-      row.innerHTML = `<div class="head">
-          <select aria-label="${i + 1}社目">${TYPES.map(t => `<option value="${t.k}" ${t.k === d.type ? 'selected' : ''}>${t.n}</option>`).join('')}</select>
-          <button type="button" class="del">削除</button></div>
-        <div class="f">
-          <div><label>毎月の返済額</label><div class="ib"><input data-k="monthly" inputmode="numeric" value="${d.monthly ? Number(d.monthly).toLocaleString('ja-JP') : ''}"><i>円</i></div></div>
-        </div>`;
-      row.querySelector('select').addEventListener('change', e => { d.type = e.target.value; render(); });
-      row.querySelector('.del').addEventListener('click', () => { state.debts = state.debts.filter(x => x.id !== d.id); buildDebts(); render(); $('addDebt').focus(); });
-      row.querySelectorAll('input').forEach(inp => {
-        if (inp.dataset.k === 'monthly') liveComma(inp);
-        inp.addEventListener('input', () => { d[inp.dataset.k] = parse(inp.value) ?? ''; render(); });
-      });
-      box.appendChild(row);
-    });
-  }
-  $('addDebt').addEventListener('click', () => {
-    state.debts.push({ id: ++seq, type: 'sarakin', monthly: '' });
-    buildDebts(); render();
-    const rows = $('debts').querySelectorAll('.debt');
-    rows[rows.length - 1].querySelector('select').focus();
-  });
-  $('reset').addEventListener('click', () => {
-    $('price').value = DEF.price.toLocaleString('ja-JP'); $('down').value = '0'; $('income').value = '';
-    sel.value = String(DEF.times); state.hh = DEF.hh; state.hc = DEF.hc; state.debts = []; seq = 0;
-    buildDebts(); render(); $('income').focus();
-  });
-
-  function loan(price, down, n) {
-    const p = price - down;
-    if (p <= 0) return { p: 0, monthly: 0, first: 0, split: 0, annual: 0, valid: down >= 0 };
-    const r = RATE / 12;
-    const exact = p * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
-    const monthly = Math.floor(exact / 100) * 100;
-    const first = Math.ceil((exact * n - monthly * (n - 1)) / 100) * 100;
-    const split = first + monthly * (n - 1);
-    return { p, monthly, first, split, annual: n >= 12 ? monthly * 12 : split, valid: down === 0 || down >= first };
-  }
-
-  function render() {
-    const price = parse($('price').value) ?? 0, down = parse($('down').value) ?? 0;
-    const n = Number(sel.value) || 60, income = parse($('income').value) ?? 0;
-    const hh = Math.min(Math.max(state.hh, 1), 4), living = LIVING[state.hc][hh - 1];
-    const L = loan(price, down, n);
-
-    let monthly = 0, count = 0;
-    state.debts.forEach(d => { const m = Number(d.monthly) || 0; if (m > 0) { count++; monthly += m; } });
-
-    const otherAnnual = monthly * 12 * OTHER_MULT;
-    const score = (income - living - otherAnnual) * SCORE_MULT;
-    const dtiWith = income > 0 ? (monthly * 12 + L.annual) / income : null;
-
-    $('hh').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.v) === hh));
-    $('hc').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.hc));
-    document.querySelectorAll('.plan').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.price) === price));
-    $('downBox').classList.toggle('bad', !L.valid);
-    $('downHint').textContent = down > 0 && !L.valid ? `初回支払額 ${yen(L.first)}円 以上にしてください` : 'なければ0円のまま';
-    $('incHint').textContent = income > 0 ? man(income) : '源泉徴収票・給与明細の税込額';
-    $('cnt').textContent = count + '件';
-    $('mon').textContent = yen(monthly) + '円';
-
-    let s, mark, verdict, why;
-    if (!L.valid) {
-      s = 'idle'; mark = '―'; verdict = '頭金を見直してください';
-      why = `頭金は0円か、初回支払額 ${yen(L.first)}円 以上にしてください`;
-    } else if (income <= 0) {
-      s = 'idle'; mark = '―'; verdict = '年収を入れてください'; why = '商品・年収・世帯を入れてください';
-    } else if (count >= COUNT_CUT) {
-      s = 'ng'; mark = '否'; verdict = '契約不可'; why = `他社借入が${count}件（3件以上は不可）`;
-    } else if (dtiWith > DTI_CUT) {
-      s = 'ng'; mark = '否'; verdict = '契約不可'; why = '返済の負担が重すぎます';
-    } else if (score >= L.annual) {
-      s = 'ok'; mark = '可'; verdict = '基準クリア'; why = '';
-    } else {
-      s = 'ng'; mark = '否'; verdict = '契約不可'; why = '支払余力が足りません';
-    }
-    $('vbox').dataset.s = s; $('mark').textContent = mark;
-    $('verdict').textContent = verdict;
-    const w = $('why'); w.textContent = why; w.hidden = !why;
-  }
-
-  $('price').value = DEF.price.toLocaleString('ja-JP');
-  $('down').value = '0'; sel.value = String(DEF.times);
-  buildDebts(); render();
-})();
-</script>
-</body>
-</html>
