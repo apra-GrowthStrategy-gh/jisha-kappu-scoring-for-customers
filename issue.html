@@ -200,7 +200,14 @@ h1{-webkit-user-select:none;user-select:none}
   }
 
   const sel = $('times');
-  for (let i = 3; i <= 60; i += 3) { const o = document.createElement('option'); o.value = i; o.textContent = `${i}回` + (i % 12 === 0 ? `（${i / 12}年）` : ''); sel.appendChild(o); }
+  // 2回払いは割賦販売法の「割賦販売」（2か月以上・3回以上）に当たりません。
+  // 外すときは下の [2] を消してください。
+  [2].concat(Array.from({ length: 20 }, (_, k) => (k + 1) * 3)).forEach(i => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = `${i}回` + (i % 12 === 0 ? `（${i / 12}年）` : '');
+    sel.appendChild(o);
+  });
   sel.value = '60';
   $('price').value = (902000).toLocaleString('ja-JP');
   $('down').value = '0';
